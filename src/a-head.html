@@ -65,8 +65,8 @@ button{font:inherit;color:inherit}
 .num{opacity:0;transition:opacity .35s;pointer-events:none}
 .goggles .num{opacity:1}
 .num text{fill:var(--ink);font-weight:600}
-.ring{animation:ring 1.8s ease-out infinite;transform-box:fill-box;transform-origin:center;pointer-events:none}
-@keyframes ring{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+.ring{animation:ring 1.1s ease-in-out infinite alternate;pointer-events:none}
+@keyframes ring{0%{opacity:.95}100%{opacity:.2}}
 .mote{animation:drift 13s ease-in-out infinite alternate}
 .nudge{animation:nudge 1.1s ease-in-out infinite}@keyframes nudge{50%{transform:translateX(-9px)}}
 @keyframes drift{to{transform:translate(20px,-28px)}}

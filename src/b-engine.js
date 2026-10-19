@@ -26,8 +26,11 @@ function unlockAudio(){if(!SOUND)return;try{
     const d=AC.createDelay(1),fb=AC.createGain(),lp=AC.createBiquadFilter();d.delayTime.value=.19;fb.gain.value=.34;lp.type='lowpass';lp.frequency.value=2800;
     ECHO=AC.createGain();ECHO.gain.value=.5;ECHO.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(comp);
     NOISE=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const ch=NOISE.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1}
-  if(AC.state==='suspended')AC.resume();if(AMB.kind&&!AMB.nodes.length)ambient(AMB.kind)}catch(e){}}
-const live=()=>SOUND&&AC&&MASTER;
+  if(AC.state==='suspended')AC.resume();if(AMB.kind&&AMB.on!==AMB.kind)ambient(AMB.kind)}catch(e){}}
+const live=()=>SOUND&&AC&&MASTER&&!document.hidden;
+/* the app is put away (screen off, home button, another app): silence everything; carry on when it comes back */
+document.addEventListener('visibilitychange',()=>{if(!AC)return;try{if(document.hidden){ambStop();AC.suspend()}else if(SOUND){AC.resume().then(()=>{if(AMB.kind)ambient(AMB.kind)}).catch(()=>{})}}catch(e){}});
+addEventListener('pagehide',()=>{try{if(AC){ambStop();AC.suspend()}}catch(e){}});
 function outTo(node,wet){node.connect(MASTER);if(wet&&ECHO){const g=AC.createGain();g.gain.value=wet;node.connect(g);g.connect(ECHO)}}
 function env(g,t,a,peak,d){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)}
 function osc(type,f,dur,vol,{to,wet=.25,a=.006,at=0,det=0,lfo=0,lfoDepth=0,lp=0}={}){
@@ -87,14 +90,15 @@ const SFX={
 };
 /* ambient soundscape: a soft pad plus little events that suit the place */
 let AMB={kind:null,nodes:[],timer:null};
-function ambStop(){clearTimeout(AMB.timer);AMB.timer=null;AMB.nodes.forEach(n=>{try{n.g.gain.setTargetAtTime(.0001,AC.currentTime,.4);n.o.forEach(o=>o.stop(AC.currentTime+2))}catch(e){}});AMB.nodes=[]}
+function ambStop(){clearTimeout(AMB.timer);AMB.timer=null;clearTimeout(AMB.swell);AMB.swell=null;AMB.on=null;AMB.nodes.forEach(n=>{try{n.g.gain.setTargetAtTime(.0001,AC.currentTime,.4);n.o.forEach(o=>o.stop(AC.currentTime+2))}catch(e){}});AMB.nodes=[]}
 function ambient(kind){
-  AMB.kind=kind;if(!live())return;ambStop();
+  AMB.kind=kind;if(!live())return;ambStop();AMB.on=kind;
   const PAD={hills:[110,164.8],scales:[110,164.8],oven:[98,146.8],shop:[130.8,196],glass:[123.5,185],cave:[92.5,138.6],river:[103.8,155.6],gorge:[87.3,130.8],meadow:[116.5,174.6],patch:[103.8,155.6],desk:[98,146.8],picnic:[110,164.8],tower:[92.5,138.6],festival:[116.5,174.6],lair:[73.4,110],hub:[130.8,196],sea:[98,146.8],door:[98,146.8],lagoon:[110,164.8],chart:[98,146.8],whirl:[73.4,110],beach:[110,164.8],lamp:[87.3,130.8]}[kind]||[110,164.8];
-  try{const g=AC.createGain();g.gain.value=.0001;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;g.connect(lp);outTo(lp,.4);
-    const os=PAD.map((f,i)=>{const o=AC.createOscillator();o.type=i?'sine':'triangle';o.frequency.value=f;o.detune.value=i?6:-6;o.connect(g);o.start();return o});
-    const l=AC.createOscillator(),lg=AC.createGain();l.frequency.value=.08;lg.gain.value=.006;l.connect(lg);lg.connect(g.gain);l.start();os.push(l);
-    g.gain.setTargetAtTime(.014,AC.currentTime,1.5);AMB.nodes.push({g,o:os})}catch(e){}
+  /* no continuous drone: every so often a soft, high chord breathes in and fades away, with silence between */
+  const swell=()=>{if(AMB.kind!==kind||!live())return;const [f1,f2]=PAD,up=Math.random()<.5?2:1.5;
+    osc('sine',f1*2,5.5,.0045,{a:2.6,wet:.7});osc('sine',f2*up,5,.0035,{a:3,at:.4,wet:.7});
+    AMB.swell=setTimeout(swell,11000+Math.random()*9000)};
+  AMB.swell=setTimeout(swell,2500);
   const ev={
     hills:()=>{if(Math.random()<.6)for(let k=0;k<3;k++)osc('sine',4300+Math.random()*300,.03,.006,{at:k*.07,wet:.3});else bell(noteHz(5+Math.floor(Math.random()*8)),.012,1.6,{wet:.8})},
     oven:()=>{const n=2+Math.floor(Math.random()*5);for(let k=0;k<n;k++)noise(.02,.03+Math.random()*.04,{f:1500+Math.random()*2500,q:2,at:k*(.05+Math.random()*.15),wet:0});if(Math.random()<.15)noise(.6,.02,{type:'lowpass',f:300,a:.2,wet:0})},

@@ -11,13 +11,13 @@ function dayPic(parent,x,y,kind,{onTap,label}={}){const c=el('g',{transform:`tra
   else{el('rect',{x:-32,y:2,width:64,height:20,rx:4,fill:'#8a6ab0'},g);el('rect',{x:-32,y:-6,width:20,height:12,rx:4,fill:'#fff'},g);el('path',{d:'M22,-26 a12,12 0 1 0 8,18 a9,9 0 1 1 -8,-18Z',fill:'#fff0a0'},g);[[-20,-26],[0,-20],[-34,-14]].forEach(([sx,sy])=>el('circle',{cx:sx,cy:sy,r:1.6,fill:'#fff'},g))}
   el('text',{y:36,'text-anchor':'middle','font-size':13,'font-weight':700,fill:night?'#fff4e6':'#3a2418'},c).textContent={wake:'wake up',breakfast:'breakfast',lunch:'lunch',home:'home time',dinner:'dinner',bed:'bedtime'}[kind];
   if(onTap)interact(c,{label:label||`Picture: ${kind}`,tap:()=>onTap(c)});popIn(c,.5);return c}
-const PICKS=[{k:'pick',t:0,pm:1,opts:['wake','lunch','bed'],ans:'lunch'},{k:'pick',t:450,pm:0,opts:['breakfast','home','bed'],ans:'breakfast'},{k:'pick',t:540,pm:1,opts:['lunch','home','bed'],ans:'bed'},{k:'pick',t:180,pm:1,opts:['breakfast','home','dinner'],ans:'home'},{k:'pick',t:390,pm:1,opts:['wake','lunch','dinner'],ans:'dinner'},{k:'pick',t:30,pm:1,opts:['breakfast','lunch','bed'],ans:'lunch'}];
+const PICKS=[{k:'pick',t:0,pm:1,opts:['wake','lunch','bed'],ans:'lunch'},{k:'pick',t:450,pm:0,opts:['breakfast','home','bed'],ans:'breakfast'},{k:'pick',t:540,pm:1,opts:['lunch','home','bed'],ans:'bed'},{k:'pick',t:180,pm:1,opts:['breakfast','home','dinner'],ans:'home'},{k:'pick',t:300,pm:1,opts:['wake','lunch','dinner'],ans:'dinner'},{k:'pick',t:30,pm:1,opts:['breakfast','lunch','bed'],ans:'lunch'}];
 const PICN={wake:'wake up',breakfast:'breakfast',lunch:'lunch',home:'home time',dinner:'dinner',bed:'bedtime'};
 /* the sky for a time of day (t in minutes, pm adds 12 hours) */
 function skyAt(t,pm){const h=((t%720)+720)%720/60+(pm?12:0);return h<6||h>=21?'#1e2450':h<8?'#f0b090':h<17?'#8fc8f0':h<19?'#f0a070':'#7a5a9a'}
 
 W.sun={scene:'meadow',
-notes:`<p>Telling the time from the hour hand alone, for the youngest first. The clock has lost its minute hand: only the short hand is left. She drags it to match part of the day (Tock wakes up at 7, home time is half past 3, dinner is nearly 6) and the sky changes with it. Check, and Tock cuckoos the hours. Turned round, the hand is set and she picks the picture that fits. Last, she puts three clocks in order through the day, which shows the hand goes round twice a day (dinner at 6 comes after breakfast at 7).</p>`,
+notes:`<p>Telling the time from the hour hand alone, for the youngest first. The clock has lost its minute hand: only the short hand is left. She drags it to match part of the day (Tock wakes up at 7, home time is half past 3, dinner is at 5) and the sky changes with it. Check, and Tock cuckoos the hours. Turned round, the hand is set and she picks the picture that fits. Last, she puts three clocks in order through the day, which shows the hand goes round twice a day (dinner at 5 comes after breakfast at 7).</p>`,
 mount(root){
   /* set: drag the hand to t; pick: which picture fits t; order: tap the clocks in day order */
   const R=[
@@ -26,7 +26,7 @@ mount(root){
     {v:[{k:'set',t:210,pm:1,say:'Home time is half past 3. Set the clock.'},{k:'set',t:150,pm:1,say:'Home time is half past 2. Set the clock.'}],gen:i=>{const h=[4,1,4,1][i%4];return{k:'set',t:h*60+30,pm:1,say:`Home time is half past ${h}. Set the clock.`}}},
     {v:[{k:'set',t:330,pm:1,say:'Dinner is at half past 5. Set the clock.'},{k:'set',t:390,pm:1,say:'Dinner is at half past 6. Set the clock.'}],gen:i=>{const h=[5,6,7][i%3];return{k:'set',t:h*60+(i%2?0:30),pm:1,say:`Dinner is at ${i%2?`${h} o’clock`:`half past ${h}`}. Set the clock.`}}},
     {v:[{k:'pick',t:510,pm:1,opts:['home','dinner','bed'],ans:'bed'},{k:'pick',t:210,pm:1,opts:['wake','home','bed'],ans:'home'}],gen:i=>PICKS[(i+3)%PICKS.length]},
-    {v:[{k:'order',cl:[[360,1,'dinner'],[420,0,'breakfast'],[30,1,'lunch']]},{k:'order',cl:[[480,1,'bed'],[480,0,'wake'],[210,1,'home']]}],gen:i=>[{k:'order',cl:[[390,1,'dinner'],[450,0,'breakfast'],[0,1,'lunch']]},{k:'order',cl:[[510,1,'bed'],[420,0,'wake'],[180,1,'home']]}][i%2]}];
+    {v:[{k:'order',cl:[[300,1,'dinner'],[420,0,'breakfast'],[30,1,'lunch']]},{k:'order',cl:[[480,1,'bed'],[480,0,'wake'],[210,1,'home']]}],gen:i=>[{k:'order',cl:[[300,1,'dinner'],[450,0,'breakfast'],[0,1,'lunch']]},{k:'order',cl:[[510,1,'bed'],[420,0,'wake'],[180,1,'home']]}][i%2]}];
   const S={r:0,busy:false,won:false,pi:{},pick:null,seq:[]};
   const skyL=el('g',{},root),scene=el('g',{},root),qL=el('g',{},root),ui=el('g',{},root);const guide=tockGuide(ui);let ck=null;
   const st=navStone({label:'Next clock',onTap:()=>{S.r=(S.r+1)%R.length;load()}});

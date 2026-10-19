@@ -128,10 +128,10 @@ function dioRock(g,top){el('path',{d:'M-37,0 Q-31,14 -17,22 Q-7,40 2,45 Q10,35 1
 function islandNode(parent,w,{x,y,s=1,label=true,beam=230}){const P=mine(),open=isOpen(w),clr=P.cleared.includes(w),next=!grown()&&w===frontier(worldOf(w).id)&&!clr;
   const g=el('g',{},parent),inner=el('g',{},g),D=DIO[w];
   if(next){el('rect',{x:-16,y:-beam,width:32,height:beam,fill:'url(#gBeam)'},inner);el('ellipse',{cx:0,cy:-2,rx:46,ry:16,fill:'none',stroke:'#fff0a0','stroke-width':2.5,class:'ring'},inner)}
-  if(clr)el('ellipse',{cx:0,cy:4,rx:48,ry:22,fill:'#ffd27a',opacity:.22,filter:'url(#glow)'},inner);
+  if(clr)el('ellipse',{cx:0,cy:4,rx:58,ry:28,fill:'url(#gGlC)',opacity:.55},inner);
   const body=el('g',{},inner);dioRock(body,D.top);D.draw(body);
-  if(!open){body.setAttribute('filter','url(#fLock)');body.setAttribute('opacity',.55);
-    const m=el('g',{},inner);[[-20,-16,26,9],[16,-24,24,8],[0,-6,34,8]].forEach(([cx,cy,rx,ry],j)=>{const e=el('ellipse',{cx,cy,rx,ry,fill:'#e6dcf5',opacity:.3},m);e.classList.add('mote');e.style.animationDelay=(-j*2.1-x*.01)+'s'});
+  if(!open){body.setAttribute('opacity',.42);
+    const m=el('g',{},inner);[[-20,-16,26,9],[16,-24,24,8],[0,-6,34,8]].forEach(([cx,cy,rx,ry],j)=>{const e=el('ellipse',{cx,cy,rx,ry,fill:'#e6dcf5',opacity:.3},m);e.classList.add('twinkle');e.style.animationDelay=(-j*2.1-x*.01)+'s'});
     const lk=el('g',{transform:'translate(0,-20)'},inner);el('circle',{r:10,fill:'#2c2356',stroke:'rgba(201,184,238,.6)','stroke-width':1.5},lk);el('rect',{x:-5,y:-2,width:10,height:8,rx:2,fill:'#c9b8ee'},lk);el('path',{d:'M-3,-2 v-3 a3,3 0 0 1 6,0 v3',fill:'none',stroke:'#c9b8ee','stroke-width':1.8},lk)}
   if(clr){el('path',{d:'M30,-2 V-42',stroke:'#e8dcc0','stroke-width':1.8},inner);const f=el('path',{d:'M30,-42 L46,-37 L30,-31Z',fill:'#ffc04d',stroke:'#fff0a0','stroke-width':1},inner);el('path',{d:'M36,-39.5 l1,2 2.2,.3 -1.6,1.5 .4,2.2 -2,-1.1 -2,1.1 .4,-2.2 -1.6,-1.5 2.2,-.3Z',fill:'#fff6d0'},inner)}
   if(label){const t=el('text',{x:0,y:62,'text-anchor':'middle','font-size':14,'font-weight':600,fill:'#fff4e6',opacity:open?1:.55,stroke:'#1d1840','stroke-width':3.5,'paint-order':'stroke'},inner);t.textContent=WNAME[w]}
