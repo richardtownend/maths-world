@@ -33,7 +33,7 @@ mount(root){
   const Q=[{t:'loot',v:[{A:72},{A:96},{A:56}]},{t:'pie',v:[{n:8,c:{sheep:4,goat:2,duck:2}},{n:6,per:2,c:{sheep:6,goat:4,duck:2}},{n:12,c:{sheep:6,goat:4,duck:2}}]},
     {t:'tiles',v:[{cols:5,rows:4,a:2,b:3},{cols:4,rows:4,a:3,b:1},{cols:6,rows:3,a:1,b:2}]},{t:'turn',v:[{t0:195,f:[3,4]},{t0:150,f:[1,2]},{t0:255,f:[5,4]}]},
     {t:'shop',v:[{n:3,p:45,purse:[100,50,50,20,20,10,10,5,5,2]},{n:4,p:35,purse:[100,50,20,20,10,5,5,2,1]},{n:3,p:25,purse:[50,50,20,10,5,5,2,2,1]}]},
-    {t:'roman',v:[{t0:420,t1:570,w:'half past IX',n:'9:30'},{t0:180,t1:285,w:'quarter to V',n:'4:45'},{t0:600,t1:735,w:'quarter past XII',n:'12:15'},{t0:240,t1:420,w:'VII o’clock',n:'7:00'}]},
+    {t:'roman',v:[{t0:435,t1:570,w:'half past IX',n:'9:30'},{t0:195,t1:285,w:'quarter to V',n:'4:45'},{t0:615,t1:735,w:'quarter past XII',n:'12:15'},{t0:255,t1:420,w:'VII o’clock',n:'7:00'}]},
     {t:'graph',v:[{s:100,d:20},{s:90,d:15},{s:100,d:25},{s:70,d:10}]}];
   const S={r:0,lives:3,busy:false,done:false,vr:{},intro:false};
   const V=()=>{const q=Q[S.r];return q.v[(S.vr[S.r]||0)%q.v.length]};
@@ -140,7 +140,7 @@ mount(root){
     later(7600,()=>{const s=navStone({label:'Play again',onTap:()=>{S.r=0;S.lives=3;S.done=false;S.vr={};S.intro=true;go('eclipse')}});s.ready(true)})}
   function intro(){EPOCH++;arena.innerHTML='';pane.innerHTML='';S.busy=false;navDots(Q.length,0,true);drawLives();drawPhases();ec.setCover(1);loop(dt=>{loopT+=dt;ec.tick(loopT)});
     decQ(qL,[['t','The Eclipse']],false,null);const b=el('g',{transform:'translate(240,300)'},arena);el('rect',{x:-200,y:-110,width:400,height:200,rx:18,fill:'#2a2048',stroke:'#ff7eb6','stroke-width':3},b);
-    ['Hee hee! It was ME all along!','I sent the Gloom, the Muddler, the Magpie,','the Kraken, the Smudge, the Inkblot, the Snooze,','Captain Grabbit AND Fudge, to muddle every world,','so I could gobble up the moon!'].forEach((t,i)=>el('text',{y:-62+i*30,'text-anchor':'middle','font-size':i?14:18,'font-weight':800,fill:i?'#e8dcff':'#ff7eb6'},b).textContent=t);
+    ['Hee hee! It was ME all along!','I sent the Gloom, the Muddler, the Magpie,','the Kraken, the Smudge, the Inkblot, the Snooze,','Captain Grabbit, Fudge AND Gruff, to muddle every world,','so I could gobble up the moon!'].forEach((t,i)=>el('text',{y:-62+i*30,'text-anchor':'middle','font-size':i?14:18,'font-weight':800,fill:i?'#e8dcff':'#ff7eb6'},b).textContent=t);
     decGo(arena,560,500,'Begin: face the Eclipse',()=>{SFX.pop(1.2);S.intro=true;load()},'Go');
     say('Seven puzzles, each from two worlds. Every right answer pushes the shadow off the moon!')}
   function load(){if(!S.intro)return intro();EPOCH++;FX.innerHTML='';arena.innerHTML='';pane.innerHTML='';S.busy=false;navDots(Q.length,S.r,true);drawLives();drawPhases();ec.setCover(1-S.r/Q.length);

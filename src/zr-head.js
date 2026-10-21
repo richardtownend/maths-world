@@ -10,7 +10,7 @@ const toRoman=n=>{let s='';ROMAN.forEach(([v,t])=>{while(n>=v){s+=t;n-=v}});retu
 const romanVal=s=>{let t=0;for(let i=0;i<s.length;i++){const a=RV[s[i]],b=RV[s[i+1]]||0;t+=a<b?-a:a}return t};
 const fmtR=(n,dp=0)=>{const s=Math.abs(n).toFixed(dp),[w,f]=s.split('.');return (n<0?'−':'')+w.replace(/\B(?=(\d{3})+(?!\d))/g,',')+(f?'.'+f:'')};
 const roundTo=(v,step)=>{const k=v/step,f=Math.floor(k+1e-9);return +(((k-f)>=.5-1e-9?f+1:f)*step).toFixed(6)};
-const ROAD_FONT='Fraunces,Georgia,serif',CW=.8;
+const ROAD_FONT='Fraunces,Georgia,serif',CW=.88;
 const STONE={face:'#e2d6bf',side:'#c2b294',edge:'#8a7a5e',ink:'#4a3c2a'};
 
 /* carved letters: dark in the stone, with a light lip below */

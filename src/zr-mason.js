@@ -13,7 +13,7 @@ mount(root){
   function drawScene(){scene.innerHTML='';
     /* the mason's bench, the hammer and chisel */
     el('rect',{x:70,y:350,width:460,height:22,rx:6,fill:'#8a5a34',stroke:'#4a2a14','stroke-width':2},scene);[110,490].forEach(x=>el('rect',{x:x-8,y:372,width:16,height:60,fill:'#6a4220'},scene));
-    const h=el('g',{transform:'translate(500,240) rotate(-30)'},scene);el('rect',{x:-4,y:0,width:8,height:46,rx:3,fill:'#8a5a34'},h);el('rect',{x:-16,y:-10,width:32,height:16,rx:4,fill:'#8a92a8',stroke:'#4a5268','stroke-width':2},h);
+    const h=el('g',{transform:'translate(524,240) rotate(-30)'},scene);el('rect',{x:-4,y:0,width:8,height:46,rx:3,fill:'#8a5a34'},h);el('rect',{x:-16,y:-10,width:32,height:16,rx:4,fill:'#8a92a8',stroke:'#4a5268','stroke-width':2},h);
     const c=el('g',{transform:'translate(96,248) rotate(28)'},scene);el('rect',{x:-3,y:-30,width:6,height:44,rx:2,fill:'#a8b0c4',stroke:'#4a5268','stroke-width':1.5},c);el('rect',{x:-5,y:-46,width:10,height:18,rx:3,fill:'#8a5a34'},c)}
   /* only I before V/X, X before L/C, C before D/M; and only one in front */
   function why(str){if(/(IL|IC|ID|IM|XD|XM|VX|VL|VC|VD|VM|LC|LD|LM|DM)/.test(str))return'Only I can go in front of V and X, and only X in front of L and C.';
@@ -23,7 +23,7 @@ mount(root){
       const bad=why(s);
       if(v===S.n&&s===toRoman(S.n)){win();return}
       SFX.wrong();shake(2);
-      say(bad?`${bad} ${v===S.n?'It does add up to '+S.n+', but there’s a proper way.':''}`:v===S.n?`That adds up to ${S.n}, but the Romans would carve it shorter: biggest first, and use a take-away instead of a long row.`:v>S.n?`The stone reads ${v}, more than ${S.n}.${/[VXLC]I/.test(s)&&!/I[VX]/.test(s)?' A small letter after a big one adds. In front, it takes away.':''}`:`The stone reads ${v}, less than ${S.n}.`);
+      say(bad?`${bad} ${v===S.n?'It does add up to '+S.n+', but there’s a proper way.':''}`:v===S.n?(s.length===toRoman(S.n).length?`That adds up to ${S.n}, but Romans carve the biggest letters first.`:`That adds up to ${S.n}, but the Romans would carve it shorter: use a take-away instead of a long row.`):v>S.n?`The stone reads ${v}, more than ${S.n}.${/[VXLC]I/.test(s)&&!/I[VX]/.test(s)?' A small letter after a big one adds. In front, it takes away.':''}`:`The stone reads ${v}, less than ${S.n}.`);
       later(2800,()=>{readL.innerHTML='';S.busy=false})}})}
   function win(){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(300,296,{n:16});const s=toRoman(S.n);
     const take=s.match(/IV|IX|XL|XC|CD|CM/g)||[];say(`${s} = ${S.n}.${take.length?' '+take.map(t=>`${t} is ${RV[t[1]]} take away ${RV[t[0]]}`).join(', and ')+'.':''}`);

@@ -38,9 +38,9 @@ mount(root){
   function checkSplit(){const good=goodCuts(S.str),cuts=S.cuts;
     if(![...good].every(k=>cuts.has(k))||[...cuts].some(k=>!good.has(k))){
       const extra=[...cuts].find(k=>!good.has(k));let msg;
-      if(extra!=null){const a=S.str[extra-1],b=S.str[extra];msg=RV[a]<RV[b]?`${a}${b} belongs together: the ${a} in front takes away from the ${b}.`:`${S.str.slice(0,extra)} and ${S.str.slice(extra)}: both sides of that cut are the same kind (${PL[[1000,100,10,1].findIndex(v=>RV[a]>=v)]}).`}
-      else msg='Split wherever the letters change from thousands (M) to hundreds (C, D) to tens (X, L) to ones (I, V).';
-      SFX.wrong();shake(2);say(msg);return}
+      if(extra!=null){const a=S.str[extra-1],b=S.str[extra];msg=RV[a]<RV[b]?`${a}${b} belongs together: the ${a} in front takes away from the ${b}.`:`The ${a} and the ${b} either side of that cut are both ${PL[[1000,100,10,1].findIndex(v=>RV[a]>=v)]}: keep them together.`}
+      else msg='There’s a split missing. Each place gets its own chunk: thousands, then hundreds, tens and ones. A pair that takes away (like CM) stays together.';
+      SFX.wrong();shake(2);say(msg);S.cuts=new Set();later(900,drawPanel);return}
     SFX.chime();S.phase='wheels';drawPanel();drawCols();burst(300,PY,{n:10});
     S.W=CX.map((x,i)=>bigWheels(ui,{x,y:470,digits:1,label:`The ${PL[i]} digit`}));
     if(go)go.remove();go=decGo(ui,548,470,'Check the year',check,'Check');say('Now set each wheel: how many thousands, hundreds, tens and ones?')}
@@ -50,15 +50,15 @@ mount(root){
     if(S.phase==='split'){checkSplit();return}
     const vals=S.W.map(w=>w.get());if(vals.every(v=>v==null)){say('Set the wheels under each column.');return}
     const y=vals.reduce((a,v)=>a*10+(v||0),0);if(y===S.y){win();return}
-    const G=chunks(S.str),badI=vals.findIndex((v,i)=>(v||0)!==Math.floor(S.y/[1000,100,10,1][i])%10);SFX.wrong();shake(2);
-    say(G[badI]?`Look at the ${PL[badI]}: ${G[badI]} is ${romanVal(G[badI])}, so the ${PL[badI]} wheel shows ${Math.floor(S.y/[1000,100,10,1][badI])%10}.`:`Nothing is carved in the ${PL[badI]}, so that wheel is 0.`)}
+    const G=chunks(S.str),badI=vals.findIndex((v,i)=>(v||0)!==Math.floor(S.y/[1000,100,10,1][i])%10);SFX.wrong();shake(2);S.busy=true;
+    say(`${G[badI]?`Look again at the ${PL[badI]}: what is ${G[badI]} worth?`:`Nothing is carved in the ${PL[badI]}: what does an empty place show?`} Here’s another bridge…`);later(3400,()=>load(true))}
   function win(){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(300,PY,{n:18});S.W.forEach(w=>w.lock(true));
     const G=chunks(toRoman(S.y));say(R[S.r].carve?`${toRoman(S.y)}: ${G.filter(Boolean).join(' | ')}. The new bridge has this year on it!`:`${G.filter(Boolean).map(c=>`${c} is ${fmtR(romanVal(c))}`).join(', ')}. Built in ${S.y}.`);
     if(S.r>=2)unlock('ryear');later(1400,()=>st.ready(true))}
-  function load(){EPOCH++;FX.innerHTML='';readL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;cv=null;const q=R[S.r];
-    Object.assign(S,{busy:false,won:false,y:q.carve?THIS:pick(q.ys),cuts:new Set(),phase:q.carve?'carve':'split',W:[]});S.str=toRoman(S.y);
+  function load(again){EPOCH++;FX.innerHTML='';readL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;cv=null;const q=R[S.r],py=S.y;
+    Object.assign(S,{busy:false,won:false,y:q.carve?THIS:pick(again&&q.ys?q.ys.filter(y=>y!==py):q.ys),cuts:new Set(),phase:q.carve?'carve':'split',W:[]});S.str=toRoman(S.y);
     st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawScene();
-    if(q.carve){panel.innerHTML='';drawKey();cols.innerHTML='';cv=carver(panel,{x:300,y:PY,letters:'IVXLCDM',max:9,sz:SZ,ty:330,can:()=>!S.busy&&!S.won});
+    if(q.carve){panel.innerHTML='';drawKey();cols.innerHTML='';cv=carver(panel,{x:290,y:PY,letters:'IVXLCDM',max:8,sz:SZ,ty:330,can:()=>!S.busy&&!S.won});
       go=decGo(ui,548,470,'Check the carving',check,'Check');say(`The new bridge is finished! Carve this year, ${S.y}, on it.`)}
     else{S.str=toRoman(S.y);drawPanel();drawCols();go=decGo(ui,548,470,'Check the split',check,'Check');
       say(S.r===0?'When was this bridge built? First, tap the gaps to split the year into thousands, hundreds, tens and ones.':q.d?'A new letter: D is 500, half of M. Split the year into its places.':'Split the year into thousands, hundreds, tens and ones.')}}

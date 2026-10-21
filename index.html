@@ -637,8 +637,8 @@ function svgFrac(p,x,y,n,d,sz=16){
   return g;
 }
 let _mc=null;const tWidth=(t,sz)=>{try{_mc=_mc||document.createElement('canvas').getContext('2d');_mc.font=`700 ${sz*.85}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-body')||'sans-serif'}`;const w=_mc.measureText(t).width;if(w>0)return w+10}catch(e){}return t.length*sz*.44+8};
-const ROMW={I:.3,V:.68,X:.66,L:.54,C:.7,D:.74,M:.88};
-const partW=(pt,sz)=>pt[0]==='w'&&/^[IVXLCDM]+$/.test(String(pt[1]))?[...String(pt[1])].reduce((a,c)=>a+ROMW[c],0)*sz*1.25+10:pt[0]==='f'?Math.max(String(pt[1]).length,String(pt[2]).length)*sz*.6+12:pt[0]==='w'?(String(pt[1]).length+(String(pt[1]).match(/%/g)||[]).length*.75-(String(pt[1]).match(/\./g)||[]).length*.35)*sz*.62+6:pt[0]==='t'?tWidth(String(pt[1]),sz):22;
+const ROMW={I:.34,V:.74,X:.72,L:.6,C:.76,D:.8,M:.96};
+const partW=(pt,sz)=>pt[0]==='w'&&/^[IVXLCDM]+$/.test(String(pt[1]))?[...String(pt[1])].reduce((a,c)=>a+ROMW[c],0)*sz*1.25+16:pt[0]==='f'?Math.max(String(pt[1]).length,String(pt[2]).length)*sz*.6+12:pt[0]==='w'?(String(pt[1]).length+(String(pt[1]).match(/%/g)||[]).length*.75-(String(pt[1]).match(/\./g)||[]).length*.35)*sz*.68+10:pt[0]==='t'?tWidth(String(pt[1]),sz):22;
 function exprWidth(parts,sz=17){return parts.reduce((a,pt)=>a+partW(pt,sz),0)}
 function svgExpr(p,x,y,parts,sz=17,anchor='start'){
   const g=el('g',{class:'num'},p);let cx=anchor==='middle'?x-exprWidth(parts,sz)/2:x;
@@ -8184,7 +8184,7 @@ const toRoman=n=>{let s='';ROMAN.forEach(([v,t])=>{while(n>=v){s+=t;n-=v}});retu
 const romanVal=s=>{let t=0;for(let i=0;i<s.length;i++){const a=RV[s[i]],b=RV[s[i+1]]||0;t+=a<b?-a:a}return t};
 const fmtR=(n,dp=0)=>{const s=Math.abs(n).toFixed(dp),[w,f]=s.split('.');return (n<0?'−':'')+w.replace(/\B(?=(\d{3})+(?!\d))/g,',')+(f?'.'+f:'')};
 const roundTo=(v,step)=>{const k=v/step,f=Math.floor(k+1e-9);return +(((k-f)>=.5-1e-9?f+1:f)*step).toFixed(6)};
-const ROAD_FONT='Fraunces,Georgia,serif',CW=.8;
+const ROAD_FONT='Fraunces,Georgia,serif',CW=.88;
 const STONE={face:'#e2d6bf',side:'#c2b294',edge:'#8a7a5e',ink:'#4a3c2a'};
 
 /* carved letters: dark in the stone, with a light lip below */
@@ -8394,14 +8394,15 @@ mount(root){
     later(Math.min(v,M)*(q.digits?70:110)+500,()=>{const want=ro?S.dexAt:S.n;
       if(!ro&&(S.toks.filter(t=>t==='I').length>=5||S.toks.filter(t=>t==='V').length>=2)&&v===S.n){S.busy=false;lit.remove();say(S.toks.filter(t=>t==='I').length>=5?'The right number of miles, but five sticks in a row is hard to read. Tap them to bundle them into a V.':'Right number of miles! But two Vs should be joined into an X.');SFX.clonk();return}
       if(v===want){win();return}
-      SFX.wrong();shake(2);say(ro?(v>S.dexAt?`The stone says further than that. Count the X’s as ten and the V as five.`:`The stone says not so far. ${S.str}: X is ten, V is five, each I is one.`):v<S.n?(q.digits?`The stone only reaches ${v}. You need ${S.n}.`:'The lights stop before Dex: he walked further than the stone says.'):(q.digits?`The stone goes past ${S.n}: that’s ${v}.`:'The lights go past Dex: the stone says too many miles.'));later(2600,()=>{lit.remove();S.busy=false})})}
+      if(ro){SFX.wrong();shake(2);lit.remove();say(`Not that post. X is ten, V is five, each I is one. Here’s another stone…`);later(3000,()=>load(true));return}
+      SFX.wrong();shake(2);say(v<S.n?(q.digits?`The stone only reaches ${v}. You need ${S.n}.`:'The lights stop before Dex: he walked further than the stone says.'):(q.digits?`The stone goes past ${S.n}: that’s ${v}.`:'The lights go past Dex: the stone says too many miles.'));later(2600,()=>{lit.remove();S.busy=false})})}
   function win(){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();if(dex)dex.cheer();decQ(qL,parts(true),true,guide);burst(250,440,{n:14});
     const q=R[S.r],r=q.mode==='read'?S.str:toRoman(S.n),nx=(r.match(/X/g)||[]).length,nv=(r.match(/V/g)||[]).length,ni=(r.match(/I/g)||[]).length;
     say(`${r}: ${[nx&&`${nx===1?'one ten':nx+' tens'} (X)`,nv&&'a five (V)',ni&&`${ni} one${ni>1?'s':''} (I)`].filter(Boolean).join(', ')}. That’s ${q.mode==='read'?romanVal(S.str):S.n} miles.`);
     if(S.r>=2)unlock('rsticks');later(1400,()=>st.ready(true))}
   function walkTo(k,done){const x0=X0-6,x1=px(k)-14;S.busy=true;let d=0;tween(Math.min(4200,600+k*170),(t,p)=>{const x=lerp(x0,x1,p);dex.put(x,RY+30);dex.step(x)},()=>{S.busy=false;done&&done()},ease.lin)}
-  function load(){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=R[S.r];
-    Object.assign(S,{busy:false,won:false,toks:[],dexAt:0,n:q.ns?pick(q.ns):0,str:q.ss?pick(q.ss):''});
+  function load(again){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=R[S.r],prevS=S.str;
+    Object.assign(S,{busy:false,won:false,toks:[],dexAt:0,n:q.ns?pick(q.ns):0,str:q.ss?pick(again&&q.ss.length>1?q.ss.filter(x=>x!==prevS):q.ss):''});
     const top=q.mode==='read'?romanVal(S.str):S.n;M=Math.max(12,top+4);sp=Math.min(38,(568-X0)/M);
     st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawRoad();drawStone();go=decGo(ui,548,470,'Check the stone',check,'Check');
     if(q.mode==='read'){S.toks=[...S.str];drawStone();drawDex(0);
@@ -8429,7 +8430,7 @@ mount(root){
   function drawScene(){scene.innerHTML='';
     /* the mason's bench, the hammer and chisel */
     el('rect',{x:70,y:350,width:460,height:22,rx:6,fill:'#8a5a34',stroke:'#4a2a14','stroke-width':2},scene);[110,490].forEach(x=>el('rect',{x:x-8,y:372,width:16,height:60,fill:'#6a4220'},scene));
-    const h=el('g',{transform:'translate(500,240) rotate(-30)'},scene);el('rect',{x:-4,y:0,width:8,height:46,rx:3,fill:'#8a5a34'},h);el('rect',{x:-16,y:-10,width:32,height:16,rx:4,fill:'#8a92a8',stroke:'#4a5268','stroke-width':2},h);
+    const h=el('g',{transform:'translate(524,240) rotate(-30)'},scene);el('rect',{x:-4,y:0,width:8,height:46,rx:3,fill:'#8a5a34'},h);el('rect',{x:-16,y:-10,width:32,height:16,rx:4,fill:'#8a92a8',stroke:'#4a5268','stroke-width':2},h);
     const c=el('g',{transform:'translate(96,248) rotate(28)'},scene);el('rect',{x:-3,y:-30,width:6,height:44,rx:2,fill:'#a8b0c4',stroke:'#4a5268','stroke-width':1.5},c);el('rect',{x:-5,y:-46,width:10,height:18,rx:3,fill:'#8a5a34'},c)}
   /* only I before V/X, X before L/C, C before D/M; and only one in front */
   function why(str){if(/(IL|IC|ID|IM|XD|XM|VX|VL|VC|VD|VM|LC|LD|LM|DM)/.test(str))return'Only I can go in front of V and X, and only X in front of L and C.';
@@ -8439,7 +8440,7 @@ mount(root){
       const bad=why(s);
       if(v===S.n&&s===toRoman(S.n)){win();return}
       SFX.wrong();shake(2);
-      say(bad?`${bad} ${v===S.n?'It does add up to '+S.n+', but there’s a proper way.':''}`:v===S.n?`That adds up to ${S.n}, but the Romans would carve it shorter: biggest first, and use a take-away instead of a long row.`:v>S.n?`The stone reads ${v}, more than ${S.n}.${/[VXLC]I/.test(s)&&!/I[VX]/.test(s)?' A small letter after a big one adds. In front, it takes away.':''}`:`The stone reads ${v}, less than ${S.n}.`);
+      say(bad?`${bad} ${v===S.n?'It does add up to '+S.n+', but there’s a proper way.':''}`:v===S.n?(s.length===toRoman(S.n).length?`That adds up to ${S.n}, but Romans carve the biggest letters first.`:`That adds up to ${S.n}, but the Romans would carve it shorter: use a take-away instead of a long row.`):v>S.n?`The stone reads ${v}, more than ${S.n}.${/[VXLC]I/.test(s)&&!/I[VX]/.test(s)?' A small letter after a big one adds. In front, it takes away.':''}`:`The stone reads ${v}, less than ${S.n}.`);
       later(2800,()=>{readL.innerHTML='';S.busy=false})}})}
   function win(){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(300,296,{n:16});const s=toRoman(S.n);
     const take=s.match(/IV|IX|XL|XC|CD|CM/g)||[];say(`${s} = ${S.n}.${take.length?' '+take.map(t=>`${t} is ${RV[t[1]]} take away ${RV[t[0]]}`).join(', and ')+'.':''}`);
@@ -8492,9 +8493,9 @@ mount(root){
   function checkSplit(){const good=goodCuts(S.str),cuts=S.cuts;
     if(![...good].every(k=>cuts.has(k))||[...cuts].some(k=>!good.has(k))){
       const extra=[...cuts].find(k=>!good.has(k));let msg;
-      if(extra!=null){const a=S.str[extra-1],b=S.str[extra];msg=RV[a]<RV[b]?`${a}${b} belongs together: the ${a} in front takes away from the ${b}.`:`${S.str.slice(0,extra)} and ${S.str.slice(extra)}: both sides of that cut are the same kind (${PL[[1000,100,10,1].findIndex(v=>RV[a]>=v)]}).`}
-      else msg='Split wherever the letters change from thousands (M) to hundreds (C, D) to tens (X, L) to ones (I, V).';
-      SFX.wrong();shake(2);say(msg);return}
+      if(extra!=null){const a=S.str[extra-1],b=S.str[extra];msg=RV[a]<RV[b]?`${a}${b} belongs together: the ${a} in front takes away from the ${b}.`:`The ${a} and the ${b} either side of that cut are both ${PL[[1000,100,10,1].findIndex(v=>RV[a]>=v)]}: keep them together.`}
+      else msg='There’s a split missing. Each place gets its own chunk: thousands, then hundreds, tens and ones. A pair that takes away (like CM) stays together.';
+      SFX.wrong();shake(2);say(msg);S.cuts=new Set();later(900,drawPanel);return}
     SFX.chime();S.phase='wheels';drawPanel();drawCols();burst(300,PY,{n:10});
     S.W=CX.map((x,i)=>bigWheels(ui,{x,y:470,digits:1,label:`The ${PL[i]} digit`}));
     if(go)go.remove();go=decGo(ui,548,470,'Check the year',check,'Check');say('Now set each wheel: how many thousands, hundreds, tens and ones?')}
@@ -8504,15 +8505,15 @@ mount(root){
     if(S.phase==='split'){checkSplit();return}
     const vals=S.W.map(w=>w.get());if(vals.every(v=>v==null)){say('Set the wheels under each column.');return}
     const y=vals.reduce((a,v)=>a*10+(v||0),0);if(y===S.y){win();return}
-    const G=chunks(S.str),badI=vals.findIndex((v,i)=>(v||0)!==Math.floor(S.y/[1000,100,10,1][i])%10);SFX.wrong();shake(2);
-    say(G[badI]?`Look at the ${PL[badI]}: ${G[badI]} is ${romanVal(G[badI])}, so the ${PL[badI]} wheel shows ${Math.floor(S.y/[1000,100,10,1][badI])%10}.`:`Nothing is carved in the ${PL[badI]}, so that wheel is 0.`)}
+    const G=chunks(S.str),badI=vals.findIndex((v,i)=>(v||0)!==Math.floor(S.y/[1000,100,10,1][i])%10);SFX.wrong();shake(2);S.busy=true;
+    say(`${G[badI]?`Look again at the ${PL[badI]}: what is ${G[badI]} worth?`:`Nothing is carved in the ${PL[badI]}: what does an empty place show?`} Here’s another bridge…`);later(3400,()=>load(true))}
   function win(){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(300,PY,{n:18});S.W.forEach(w=>w.lock(true));
     const G=chunks(toRoman(S.y));say(R[S.r].carve?`${toRoman(S.y)}: ${G.filter(Boolean).join(' | ')}. The new bridge has this year on it!`:`${G.filter(Boolean).map(c=>`${c} is ${fmtR(romanVal(c))}`).join(', ')}. Built in ${S.y}.`);
     if(S.r>=2)unlock('ryear');later(1400,()=>st.ready(true))}
-  function load(){EPOCH++;FX.innerHTML='';readL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;cv=null;const q=R[S.r];
-    Object.assign(S,{busy:false,won:false,y:q.carve?THIS:pick(q.ys),cuts:new Set(),phase:q.carve?'carve':'split',W:[]});S.str=toRoman(S.y);
+  function load(again){EPOCH++;FX.innerHTML='';readL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;cv=null;const q=R[S.r],py=S.y;
+    Object.assign(S,{busy:false,won:false,y:q.carve?THIS:pick(again&&q.ys?q.ys.filter(y=>y!==py):q.ys),cuts:new Set(),phase:q.carve?'carve':'split',W:[]});S.str=toRoman(S.y);
     st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawScene();
-    if(q.carve){panel.innerHTML='';drawKey();cols.innerHTML='';cv=carver(panel,{x:300,y:PY,letters:'IVXLCDM',max:9,sz:SZ,ty:330,can:()=>!S.busy&&!S.won});
+    if(q.carve){panel.innerHTML='';drawKey();cols.innerHTML='';cv=carver(panel,{x:290,y:PY,letters:'IVXLCDM',max:8,sz:SZ,ty:330,can:()=>!S.busy&&!S.won});
       go=decGo(ui,548,470,'Check the carving',check,'Check');say(`The new bridge is finished! Carve this year, ${S.y}, on it.`)}
     else{S.str=toRoman(S.y);drawPanel();drawCols();go=decGo(ui,548,470,'Check the split',check,'Check');
       say(S.r===0?'When was this bridge built? First, tap the gaps to split the year into thousands, hundreds, tens and ones.':q.d?'A new letter: D is 500, half of M. Split the year into its places.':'Split the year into thousands, hundreds, tens and ones.')}}
@@ -8548,9 +8549,9 @@ mount(root){
   function judgeMany(){const want=new Set(S.carts.filter(c=>c.end===40).map(c=>c.v)),got=S.sel;
     if(want.size===got.size&&[...want].every(v=>got.has(v))){win(40);return}SFX.wrong();shake(2);
     const missed=[...want].filter(v=>!got.has(v)),wrong=[...got].filter(v=>!want.has(v));
-    say(wrong.length?`${wrong[0]} rolled to ${roundTo(wrong[0],10)}, not 40.${wrong[0]%10===5?' Halfway rounds up!':''}`:`${missed[0]} rolled to 40 too: it’s nearer 40 than ${missed[0]<40?30:50}.`);later(3600,()=>{S.busy=false;load(true)})}
+    say(wrong.length?`${wrong[0]} rolled to ${roundTo(wrong[0],10)}, not 40.${wrong[0]%10===5?' Exactly halfway, so the wind blew it on.':''}`:missed[0]%10===5?`${missed[0]} is exactly halfway, so the wind blew it on to 40.`:`${missed[0]} rolled to 40 too: it’s nearer 40 than ${missed[0]<40?30:50}.`);later(3600,()=>{S.busy=false;load(true)})}
   function win(end){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(road.xOf(end),road.yOf(end)-30,{n:16});const q=R[S.r];
-    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')}: all nearer 40 than any other milestone (35 is halfway, so it goes up).`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway: the wind blows it on. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
+    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')} all end up at 40${S.sel.has(35)?' (35 is exactly halfway, so the wind blows it on)':''}.`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway: the wind blows it on. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
     if(S.r>=2)unlock('rhills');later(1400,()=>st.ready(true))}
   function load(again){EPOCH++;FX.innerHTML='';cartL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);flag=null;const q=R[S.r];
     const prev=S.v;Object.assign(S,{busy:false,won:false,at:null,pick:null,sel:new Set(),carts:[]});S.v=q.vs?pick(q.vs.filter(v=>v!==prev).length?q.vs.filter(v=>v!==prev):q.vs):0;
@@ -8583,8 +8584,8 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
   const st=navStone({label:'Next road',onTap:()=>{S.r=(S.r+1)%R.length;load()}});
   navStone({glyph:'redo',label:'Start this road again',onTap:()=>load()});
   const F=(v,q=S.q)=>{let d=0;while(d<(q.dp||0)&&Math.abs(v*10**d-Math.round(v*10**d))>1e-6)d++;return fmtR(v,d)},near=q=>q.near||nearestWord(q.step);
-  const parts=done=>{const q=S.q;return q.kind==='many'?[['t','carts that roll to'],['w',F(q.target)]]:q.kind==='paint'?[['t','the road that rolls to'],['w',F(q.target)]]:q.kind==='triple'?[['w',F(S.v)],['t','to the nearest 10, 100 and 1,000']]:
-    [['w',F(S.v)],['o','≈'],done?['w',F(roundTo(S.v,q.step))]:['o','?'],['t',near(q)]]};
+  const parts=done=>{const q=S.q;return q.kind==='many'?[['t','carts that roll to\u00a0'],['w',F(q.target)]]:q.kind==='paint'?[['t','the road that rolls to\u00a0'],['w',F(q.target)]]:q.kind==='triple'?[['w',F(S.v)],['t','\u00a0to the nearest 10, 100 and 1,000']]:
+    [['w',F(S.v)],['o','≈'],done?['w',F(roundTo(S.v,q.step))]:['o','?'],['t','\u00a0'+near(q)]]};
   const RD=(o)=>{const r=hillRoad(roadL,Object.assign({fmt:v=>F(v)},o));roads.push(r);return r};
   function flag(ri,v){if(flags[ri])flags[ri].remove();const r=roads[ri],x=r.xOf(v),y=r.yOf(v),f=el('g',{transform:`translate(${x},${y-30})`},roadL);el('line',{x1:0,y1:0,x2:0,y2:-30,stroke:'#5a3a24','stroke-width':2.5},f);el('path',{d:'M0,-30 L20,-24 L0,-18Z',fill:'#ffd23a',stroke:'#a8743a','stroke-width':1.5},f);flags[ri]=f;popIn(f,.4)}
   /* each milestone can be tapped on the stone, or below the road on its label (which a parked cart never covers) */
@@ -8605,22 +8606,22 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
     if(q.kind==='many'){if(!S.sel.size){say(`Tap the carts that will end up at ${F(q.target)}.`);return}S.busy=true;let left=S.carts.length;
       S.carts.forEach(c=>roads[0].roll(c.o,c.v,end=>{c.end=end;if(--left===0){const want=S.carts.filter(c=>Math.abs(c.end-q.target)<1e-9).map(c=>c.v),got=[...S.sel];
         const wrong=got.find(v=>!want.includes(v)),miss=want.find(v=>!got.includes(v));
-        if(wrong==null&&miss==null)win(q.target);else fail(wrong!=null?`${F(wrong)} rolled to ${F(roundTo(wrong,q.step))}, not ${F(q.target)}.${Math.abs(((wrong/q.step)%1+1)%1-.5)<1e-9?' Halfway goes up!':''}`:`${F(miss)} rolled to ${F(q.target)} too: it’s nearer ${F(q.target)} than any other milestone.`)}},{wind:()=>gust(cartL,roads[0].xOf(c.v),roads[0].yOf(c.v)-40)}));return}
+        if(wrong==null&&miss==null)win(q.target);else fail(wrong!=null?`${F(wrong)} rolled to ${F(roundTo(wrong,q.step))}, not ${F(q.target)}.${Math.abs(((wrong/q.step)%1+1)%1-.5)<1e-9?' Halfway goes up!':''}`:Math.abs(((miss/q.step)%1+1)%1-.5)<1e-6?`${F(miss)} is exactly halfway, so the wind blew it on to ${F(q.target)}.`:`${F(miss)} rolled to ${F(q.target)} too: it’s nearer ${F(q.target)} than any other milestone.`)}},{wind:()=>gust(cartL,roads[0].xOf(c.v),roads[0].yOf(c.v)-40)}));return}
     if(q.kind==='wheels'){const g=S.wh.get();if(g==null){say('Set the wheels to the milestone you think it will roll to.');return}S.wh.lock(true);S.busy=true;
       roads[0].roll(cart,S.v,end=>{if(Math.abs(g-end)<1e-9)win(end);else{S.wh.lock(false);fail(`It rolled to ${F(end)}. ${Math.abs(g-roundTo(g,q.step))>1e-9?`${F(g)} isn’t a milestone: they’re every ${F(q.step)}.`:why(S.v,q.step,g)}`)}},{wind:windAt(roads[0],S.v)});return}
     if(q.kind==='paint'){const [a,b]=S.pa.get(),lo=q.target-q.step/2,hi=q.target+q.step/2;S.busy=true;
       /* send carts down the painted stretch and just either side of it */
       const vs=[...new Set([a-q.snap,a,(a+b)/2,b-q.snap,b].map(v=>roundTo(clamp(v,q.lo,q.hi),q.snap)))];cartL.innerHTML='';let left=vs.length;const res=[];
       vs.forEach(v=>{const c=cartFig(cartL,{s:.55,sacks:1,handle:false});roads[0].place(c,v);roads[0].roll(c,v,end=>{res.push([v,end]);if(--left===0){
-        const okA=Math.abs(a-lo)<1e-9,okB=Math.abs(b-hi)<1e-9||Math.abs(b-(hi-q.snap))<1e-9;
-        if(okA&&okB)win(q.target);else fail(!okA?(a<lo?`A cart at ${F(a)} rolls to ${F(roundTo(a,q.step))}: start the paint further along.`:`A cart at ${F(a-q.snap)} rolls to ${F(q.target)} too: paint further back.`):(b>hi?`A cart at ${F(b)} rolls on to ${F(roundTo(b,q.step))}: stop the paint sooner.`:`A cart at ${F(b+q.snap)} rolls to ${F(q.target)} too: paint further.`))}})})}}
+        const okA=Math.abs(a-lo)<1e-9,okB=Math.abs(b-(hi-q.snap))<1e-9;
+        if(okA&&okB)win(q.target);else fail(!okA?(a<lo?`A cart at ${F(a)} rolls to ${F(roundTo(a,q.step))}: start the paint further along.`:`A cart at ${F(a-q.snap)} rolls to ${F(q.target)} too: paint further back.`):(b>=hi?`A cart at ${F(b)} ${Math.abs(b-hi)<1e-9?'balances on the peak and the wind blows it on':'rolls on'} to ${F(roundTo(b,q.step))}: stop the paint sooner.`:`A cart at ${F(b+q.snap)} rolls to ${F(q.target)} too: paint further.`))}})})}}
   function win(end){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);const q=S.q;
     burst(300,300,{n:16});
-    say(q.kind==='many'?`${[...S.sel].sort((a,b)=>a-b).map(v=>F(v)).join(', ')} all roll to ${F(q.target)}.`:q.kind==='paint'?`Every cart from ${F(q.target-q.step/2)} up to just before ${F(q.target+q.step/2)} rolls to ${F(q.target)}. The one on the peak gets blown on.`:
+    say(q.kind==='many'?`${[...S.sel].sort((a,b)=>a-b).map(v=>F(v)).join(', ')} all roll to ${F(q.target)}.`:q.kind==='paint'?`Every cart from ${F(q.target-q.step/2)} to ${F(q.target+q.step/2-q.snap)} rolls to ${F(q.target)}. The one on the peak at ${F(q.target+q.step/2)} gets blown on.`:
       q.kind==='triple'?`${F(S.v)} rounds to ${F(roundTo(S.v,10))}, ${F(roundTo(S.v,100))} and ${F(roundTo(S.v,1000))}: bigger hills, different milestones.`:`${F(S.v)} rounds to ${F(end)} (${near(q)}).`);
     if(S.r>=2&&unlockK)unlock(unlockK);later(1400,()=>st.ready(true))}
   /* two handles on the road; the stretch between them is painted gold */
-  function painter(r,q){const g=el('g',{},roadL),band=el('path',{fill:'none',stroke:'#ffd23a','stroke-width':14,'stroke-linecap':'round',opacity:.85},g);let a=q.target-q.step*1.5,b=q.target-q.step*1.1;a=roundTo(a,q.snap);b=roundTo(b,q.snap);
+  function painter(r,q){const g=el('g',{},roadL),band=el('path',{fill:'none',stroke:'#ffd23a','stroke-width':14,'stroke-linecap':'round',opacity:.85},g);let a=roundTo(q.target-q.step*.9,q.snap),b=roundTo(q.target+q.step*.9,q.snap);
     const draw=()=>{let d='';for(let i=0;i<=60;i++){const v=a+(b-a)*i/60;d+=(i?' L':'M')+r.xOf(v).toFixed(1)+','+r.yOf(v).toFixed(1)}band.setAttribute('d',d);H.forEach(h=>{const v=h.k?b:a;h.g.setAttribute('transform',`translate(${r.xOf(v).toFixed(1)},${(r.yOf(v)+30).toFixed(1)})`);h.t.textContent=F(v)})};
     const H=[0,1].map(k=>{const hg=el('g',{},g);el('line',{x1:0,y1:-28,x2:0,y2:-6,stroke:'#7a4a1e','stroke-width':3},hg);el('circle',{r:16,fill:'#ffc04d',stroke:'#7a4a1e','stroke-width':2.5},hg);el('path',{d:'M-6,0 L-11,0 M6,0 L11,0 M-11,0 l4,-4 M-11,0 l4,4 M11,0 l-4,-4 M11,0 l-4,4',stroke:'#7a4a1e','stroke-width':2},hg);
       const t=el('text',{y:34,'text-anchor':'middle','font-size':13,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},hg);
@@ -8646,7 +8647,7 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
     tappable(0);cart=cartFig(cartL,{s:.85,tag:F(S.v)});cart.put(78,190,0);const shelf=el('text',{x:78,y:212,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#3a2418'},cartL);shelf.textContent='drag me';
     interact(cart.g,{label:`The ${F(S.v)} cart: drag it onto the road`,down:()=>({}),move:p=>{if(S.busy||S.won)return;shelf.remove();const v=clamp(roundTo(r.vOf(p.x),q.snap),q.lo,q.hi);if(v!==S.at){S.at=v;r.place(cart,v);SFX.tick(Math.round(v/q.snap)%8)}},tap:()=>{}});
     decGo(ui,548,250,'Let go',check,'Go');say(q.say||`Drag the ${F(S.v)} cart to its place on the road, then tap the milestone it will roll to.`)}
-  return{S,load,roads:()=>roads,dbg:()=>({F:null,ans:S.q&&S.q.step?F(roundTo(S.v,S.q.step)):null,tri:S.q&&S.q.kind==='triple'?roads.map(r=>F(roundTo(S.v,r.step))):null,want:S.q&&S.q.kind==='many'?S.carts.filter(c=>Math.abs(roundTo(c.v,S.q.step)-S.q.target)<1e-9).map(c=>F(c.v)):null,cartLabs:S.carts.map(c=>c.v!=null?F(c.v):null),wheel:S.q&&S.q.step?roundTo(S.v,S.q.step):null,pa:S.pa?S.pa.get():null,pxy:S.q&&S.q.kind==='paint'&&roads[0]?[S.q.target-S.q.step/2,S.q.target+S.q.step/2,...(S.pa?S.pa.get():[])].map(v=>[roads[0].xOf(v),roads[0].yOf(v)+30]):null,r:S.r,v:S.v,at:S.at,kind:S.q&&S.q.kind,q:S.q,picks:S.picks,carts:S.carts.map(c=>c.v),busy:S.busy,won:S.won,cx:cart?[cart.x,cart.y]:null,xs:roads[0]?[roads[0].xOf(S.v),roads[0].yOf(S.v)]:null})}}
+  return{S,load,roads:()=>roads,dbg:()=>({F:null,ans:S.q&&S.q.step?F(roundTo(S.v,S.q.step)):null,tri:S.q&&S.q.kind==='triple'?roads.map(r=>F(roundTo(S.v,r.step))):null,want:S.q&&S.q.kind==='many'?S.carts.filter(c=>Math.abs(roundTo(c.v,S.q.step)-S.q.target)<1e-9).map(c=>F(c.v)):null,cartLabs:S.carts.map(c=>c.v!=null?F(c.v):null),wheel:S.q&&S.q.step?roundTo(S.v,S.q.step):null,pa:S.pa?S.pa.get():null,pxy:S.q&&S.q.kind==='paint'&&roads[0]?[S.q.target-S.q.step/2,S.q.target+S.q.step/2-S.q.snap,...(S.pa?S.pa.get():[])].map(v=>[roads[0].xOf(v),roads[0].yOf(v)+30]):null,r:S.r,v:S.v,at:S.at,kind:S.q&&S.q.kind,q:S.q,picks:S.picks,carts:S.carts.map(c=>c.v),busy:S.busy,won:S.won,cx:cart?[cart.x,cart.y]:null,xs:roads[0]?[roads[0].xOf(S.v),roads[0].yOf(S.v)]:null})}}
 
 /* ---------- 5. Big Hills: rounding to the nearest 100 and 1,000 ---------- */
 W.bighills={scene:'road',
@@ -8662,13 +8663,13 @@ mount(root){
 }};
 /* ---------- 6. The Great Road: rounding to 10,000 and 100,000 ---------- */
 W.greatroad={scene:'road',
-notes:`<p>The long roads between cities, where the numbers get big. Dex's step-counter says 47,300 steps; the signposts round them for travellers. First she predicts on digit wheels which milestone the cart will roll to (only the end milestones are labelled, so she works out the ones between in 10,000s), then Go rolls it. Then hills of 100,000. The key round: paint the whole stretch of road whose carts all roll to 250,000, from 245,000 up to just before 255,000, and Go sends carts along it (and just outside it) to test the paint. Last, tap every cart that rolls to 300,000.</p>`,
+notes:`<p>The long roads between cities, where the numbers get big. Dex's step-counter says 47,300 steps; the signposts round them for travellers. First she predicts on digit wheels which milestone the cart will roll to (only the end milestones are labelled, so she works out the ones between in 10,000s), then Go rolls it. Then hills of 100,000. The key round: paint the whole stretch of road whose carts all roll to 250,000, from 245,000 to 254,000 (a cart on 255,000 sits on the peak and is blown on), and Go sends carts along it (and just outside it) to test the paint. Last, tap every cart that rolls to 300,000.</p>`,
 mount(root){
   const E=roadRounds('greatroad',root,[
     {kind:'wheels',lo:30000,hi:70000,step:10000,tick:1000,digits:5,vs:[47300,52800,36100,63900,44500]},
     {kind:'wheels',lo:100000,hi:500000,step:100000,tick:10000,digits:6,vs:[248610,371200,429900,163500,350000]},
     {kind:'paint',step:10000,snap:1000,tick:1000,vars:[{lo:230000,hi:270000,target:250000},{lo:40000,hi:80000,target:60000},{lo:110000,hi:150000,target:130000}]},
-    {kind:'many',lo:200000,hi:500000,step:100000,tick:10000,target:300000,sets:[[221000,256000,297500,333000,372000,450000],[205000,251000,284000,349000,388000,430000],[238000,262000,310000,350000,365000,412000]]}],{unlockK:'rgreat'});
+    {kind:'many',lo:200000,hi:500000,step:100000,tick:10000,target:300000,sets:[[221000,256000,297500,333000,372000,450000],[205000,251000,284000,349000,388000,430000],[238000,262000,310000,350000,412000,460000]]}],{unlockK:'rgreat'});
   W.greatroad.dbgQ=E.dbg;E.S.r=resumeAt(4);E.load();
 }};
 /* ---------- 7. The Last Stretch: rounding decimals ---------- */
@@ -8688,14 +8689,14 @@ W.bridge={scene:'road',
 notes:`<p>Why rounding matters: a quick, safe guess. The old bridge has a weight limit and Dex's sacks have awkward weights (487 kg, 312 kg…). She rounds each sack to the nearest 100 by stacking 100 kg crates under it, and the crates pile up into one tower beside the bridge's limit line. Check the crates, then decide: cross, or too heavy? Crossing when it's too heavy cracks the bridge; if it's too heavy she taps a sack to leave behind. Later rounds use 10 kg and 1,000 kg crates, and one round checks Dex's own sum (398 + 207 = 905?): about right, or way off?</p>`,
 mount(root){
   const pick=a=>a[Math.floor(Math.random()*a.length)];
-  const R=[{unit:100,limit:1000,vars:[[210,390,180],[320,140,270],[180,260,410]]},{unit:100,limit:1000,vars:[[480,320,290],[510,370,260],[440,390,330]]},
-    {unit:10,limit:100,vars:[[47,38,21],[52,33,26],[44,36,28]]},{unit:100,sum:1,vars:[[398,207,905],[512,289,801],[296,403,699],[512,289,1101],[296,403,499]]},{unit:1000,limit:4000,vars:[[1210,2380],[2640,1830],[870,2240],[2710,1580]]}];
+  const R=[{unit:100,limit:1000,vars:[[210,390,180],[320,140,270],[180,260,410],[380,290,410]]},{unit:100,limit:1000,vars:[[480,320,290],[510,370,260],[440,390,330],[310,260,180]]},
+    {unit:10,limit:100,vars:[[47,38,21],[52,33,26],[33,24,31],[44,36,28]]},{unit:100,sum:1,vars:[[398,207,905],[512,289,801],[296,403,699],[512,289,1101],[296,403,499]]},{unit:1000,limit:4000,vars:[[1210,2380],[2640,1830],[870,2240],[2710,1580]]}];
   const S={r:0,busy:false,won:false,w:[],n:[],phase:'stack',left:null,q:null};
   const scene=el('g',{},root),cartL=el('g',{},root),stk=el('g',{},root),qL=el('g',{},root),ui=el('g',{},root);const guide=dexGuide(ui);let cart=null,go=null;
   const st=navStone({label:'Next load',onTap:()=>{S.r=(S.r+1)%R.length;load()}});
   navStone({glyph:'redo',label:'Start this load again',onTap:()=>load()});
   const kg=v=>`${fmtR(v)} kg`,CX=k=>S.w.length===2?[170,300][k]:[130,250,370][k],BASE=480,CH=21,unitLbl=()=>fmtR(S.q.unit);
-  const parts=done=>{const q=S.q;if(q.sum)return[['w',fmtR(S.w[0])],['o','+'],['w',fmtR(S.w[1])],['o','='],['w',fmtR(q.claim)],['t',done?'way off!':'right?']];
+  const parts=done=>{const q=S.q;if(q.sum)return[['w',fmtR(S.w[0])],['o','+'],['w',fmtR(S.w[1])],['o','='],['w',fmtR(q.claim)],['t','\u00a0'+(done?(Math.abs(q.claim-(S.w[0]+S.w[1]))>q.unit?'way off!':'about right'):'right?')]];
     const p=[];S.w.forEach((w,i)=>{if(i)p.push(['o','+']);p.push(['w',fmtR(w)])});p.push(['o','≈']);p.push(done?['w',fmtR(est())]:['o','?']);return p};
   const est=()=>S.n.reduce((a,n,i)=>a+(i===S.left?0:n*S.q.unit),0);
   function drawScene(){scene.innerHTML='';const q=S.q;
@@ -8720,23 +8721,23 @@ mount(root){
     if(!q.sum){/* the tower: every crate piled up beside the bridge's limit line */
       const tx=508,tot=S.n.reduce((a,n,i)=>a+(i===S.left?0:n),0),lim=q.limit/q.unit,top=BASE-Math.max(lim,tot)*CH,tg=el('g',{},stk);
       el('text',{x:tx,y:BASE+26,'text-anchor':'middle','font-size':12,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},tg).textContent='all the crates';
-      for(let k=0;k<tot;k++)crate(tg,tx,BASE-k*CH,unitLbl(),k>=lim?'#e8705a':'#c98a4a');
+      for(let k=0;k<tot;k++)crate(tg,tx,BASE-k*CH,unitLbl());
       const ly=BASE-lim*CH;el('line',{x1:tx-40,x2:tx+40,y1:ly,y2:ly,stroke:'#e8413e','stroke-width':3,'stroke-dasharray':'6 4'},tg);el('text',{x:tx,y:ly-6,'text-anchor':'middle','font-size':11,'font-weight':800,fill:'#fff4e6',stroke:'#8a1a1a','stroke-width':3,'paint-order':'stroke'},tg).textContent=`limit ${kg(q.limit)}`}}
   function setGo(label,fn,txt){if(go)go.remove();go=decGo(ui,548,130,label,fn,txt)}
   function chips(list){[...ui.querySelectorAll('.dchip')].forEach(n=>n.remove());list.forEach(([t,fn],i)=>{const g=el('g',{class:'dchip',transform:`translate(${list.length===1?300:190+i*180},${BASE+34})`},ui);el('rect',{x:-80,y:-20,width:160,height:40,rx:12,fill:i?'#e8705a':'#3aa86a',stroke:'#fff4e6','stroke-width':2},g);
     el('text',{y:6,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#fff'},g).textContent=t;interact(g,{label:t,tap:()=>{if(S.busy||S.won)return;SFX.pop(1.1);fn()}});popIn(g,.5)})}
   function checkStacks(){if(S.busy||S.won||S.phase!=='stack')return;const q=S.q;if(S.n.every(n=>!n)){say(`Stack ${unitLbl()} kg crates under each sack: round it to the nearest ${unitLbl()}.`);return}
     const bad=S.w.findIndex((w,i)=>S.n[i]*q.unit!==roundTo(w,q.unit));
-    if(bad>=0){SFX.wrong();shake(2);const w=S.w[bad],r=roundTo(w,q.unit);say(`${fmtR(w)} rounds to ${fmtR(r)} (it’s nearer ${fmtR(r)} than ${fmtR(r+(w<r?-q.unit:q.unit))}), so that’s ${r/q.unit} crate${r/q.unit===1?'':'s'}.`);return}
+    if(bad>=0){SFX.wrong();shake(2);const w=S.w[bad];S.n[bad]=0;drawStacks();say(`Not the ${fmtR(w)}${q.sum?'':' kg'} sack: which ${unitLbl()} is it nearest? Stack its crates again.`);return}
     SFX.chime();S.phase='decide';drawStacks();if(go){go.remove();go=null}
     if(q.sum){say(`Roughly ${fmtR(S.n[0]*q.unit)} + ${fmtR(S.n[1]*q.unit)} = ${fmtR(est())}. Dex says ${fmtR(q.claim)}. Is he about right?`);chips([['About right',()=>decide(false)],['Way off!',()=>decide(true)]])}
     else{say(`The crates come to about ${kg(est())}. The bridge takes ${kg(q.limit)}. Safe to cross?`);chips([['Cross the bridge',()=>decide(false)],['Too heavy!',()=>decide(true)]])}}
   function decide(heavy){const q=S.q;[...ui.querySelectorAll('.dchip')].forEach(n=>n.remove());
     if(q.sum){const off=Math.abs(q.claim-(S.w[0]+S.w[1]))>q.unit;if(heavy===off){win(`${fmtR(S.w[0])} + ${fmtR(S.w[1])} is really ${fmtR(S.w[0]+S.w[1])}. ${off?'The rough answer spotted the slip!':'The rough answer says it’s about right.'}`);return}
-      SFX.wrong();shake(2);say(off?`About ${fmtR(est())}, but Dex says ${fmtR(q.claim)}: that’s nowhere near. It’s way off.`:`About ${fmtR(est())} and Dex says ${fmtR(q.claim)}: close enough to trust.`);S.phase='decide';later(2800,()=>{chips([['About right',()=>decide(false)],['Way off!',()=>decide(true)]]);say('Is Dex about right?')});return}
+      S.busy=true;SFX.wrong();shake(2);say(`Compare Dex’s answer with your rough one, ${fmtR(est())}. Here’s another sum…`);later(3200,()=>load(true));return}
     const over=est()>q.limit;
     if(!heavy){if(over){crack();return}cross();return}
-    if(!over){SFX.wrong();say(`The crates are under the red line: ${kg(est())} is less than ${kg(q.limit)}. It’s safe!`);later(2600,()=>chips([['Cross the bridge',()=>decide(false)],['Too heavy!',()=>decide(true)]]));return}
+    if(!over){S.busy=true;SFX.wrong();say(`Look at the crate tower and the red line again. Here’s another load…`);later(3200,()=>load(true));return}
     S.phase='leave';drawStacks();say('Too heavy! Tap a sack for Dex to leave behind.')}
   function leave(i){if(S.busy||S.won)return;S.left=i;SFX.pop(.8);drawStacks();drawCart();if(est()>S.q.limit){say('Still over the line. Try leaving a different sack.');S.left=null;later(1600,()=>{drawStacks();drawCart()});return}
     S.phase='decide';drawStacks();say(`Now about ${kg(est())}: under the line.`);later(900,cross)}
@@ -8744,9 +8745,9 @@ mount(root){
     win(`Safe across! Really ${kg(real)}, and the rough ${kg(est())} was enough to tell.`)},ease.inOut)}
   function crack(){S.busy=true;tween(1200,(t,p)=>cart.put(lerp(64,300,p),200+Math.max(0,p-.7)*40,0),()=>{SFX.crunch?SFX.crunch():noise(.4,.2,{f:400,q:.6});shake(8);S.bridge.setAttribute('transform','rotate(4 300 210)');
     const real=S.w.reduce((a,w)=>a+w,0);say(`Crrrack! About ${kg(est())} is more than ${kg(S.q.limit)} (really ${kg(real)}). The crates were over the red line.`);SFX.wrong();
-    later(3400,()=>{S.bridge.removeAttribute('transform');cart.put(64,200,0);S.busy=false;S.phase='decide';chips([['Cross the bridge',()=>decide(false)],['Too heavy!',()=>decide(true)]]);say('Cross, or too heavy?')})})}
+    later(3600,()=>load(true))})}
   function win(msg){S.won=true;S.busy=false;roundWon(S.r);SFX.fanfare();guide.cheer();decQ(qL,parts(true),true,guide);burst(300,240,{n:16});say(msg);if(S.r>=2)unlock('rbridge');later(1400,()=>st.ready(true))}
-  function load(){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=S.q=R[S.r],v=pick(q.vars);
+  function load(again){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=S.q=R[S.r],pw=S.w&&S.w.join(),v=pick(again?q.vars.filter(x=>x.slice(0,S.w.length).join()!==pw):q.vars);
     Object.assign(S,{busy:false,won:false,phase:'stack',left:null});S.w=q.sum?v.slice(0,2):v.slice();q.claim=q.sum?v[2]:null;S.n=S.w.map(()=>0);
     st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawScene();drawCart();drawStacks();setGo('Check the crates',checkStacks,'Check');
     say(q.sum?`Dex added up two sacks. Round each to the nearest ${unitLbl()} with crates to check his answer.`:S.r===0?`Can Dex’s cart cross? Round each sack to the nearest 100 kg: stack that many 100 kg crates under it.`:`Round each sack with ${unitLbl()} kg crates, then decide.`)}
@@ -8783,9 +8784,10 @@ mount(root){
       const draw=()=>{L.innerHTML='';el('path',{d:'M50,420 H430',stroke:'#cbb98e','stroke-width':16},L);
         stood.forEach((s,i)=>milestone(L,90+i*100,412,{txt:s,sz:18,w:60,h:60}));
         sh.forEach((s,i)=>{if(stood.includes(s))return;const g=el('g',{transform:`translate(${100+i*94},${236}) rotate(${[-80,75,-70,85][i]})`},L);milestone(g,0,0,{txt:s,sz:18,w:60,h:60});el('rect',{x:-40,y:-70,width:80,height:80,fill:'transparent'},g);
-          interact(g,{label:`Fallen stone ${s}`,tap:()=>{if(S.busy)return;stood.push(s);SFX.thud?SFX.thud():SFX.pop(.7);draw()}})})};draw();
-      return{say:'Gruff knocked these milestones over. Tap them in order: the nearest (smallest) first.',go:'Check the order',check:()=>{if(stood.length<list.length)return{soft:true,msg:'Stand all four up first: tap them, smallest first.'};
-        const want=[...list].sort((a,b)=>romanVal(a)-romanVal(b)),ok=stood.every((s,i)=>s===want[i]);if(ok)return{ok:true,msg:`${want.map(s=>`${s} (${romanVal(s)})`).join(', ')}.`};const b=stood.findIndex((s,i)=>s!==want[i]),bad=stood[b];stood=[];draw();return{ok:false,msg:`${bad} is ${romanVal(bad)}, but ${want[b]} is only ${romanVal(want[b])}: it’s nearer. A small letter in front takes away.`}}}},
+          interact(g,{label:`Fallen stone ${s}`,tap:()=>{if(S.busy)return;stood.push(s);SFX.thud?SFX.thud():SFX.pop(.7);draw()}})});
+        stood.forEach((s,i)=>{const hz=el('rect',{x:90+i*100-34,y:340,width:68,height:80,fill:'transparent'},L);interact(hz,{label:`Knock ${s} back down`,tap:()=>{if(S.busy)return;stood.splice(i,1);SFX.pop(.6);draw()}})})};draw();
+      return{say:'Gruff knocked these milestones over. Tap them in order: the nearest (smallest) first. Tap a standing one to knock it back down.',go:'Check the order',check:()=>{if(stood.length<list.length)return{soft:true,msg:'Stand all four up first: tap them, smallest first.'};
+        const want=[...list].sort((a,b)=>romanVal(a)-romanVal(b)),ok=stood.every((s,i)=>s===want[i]);if(ok)return{ok:true,msg:`${want.map(s=>`${s} (${romanVal(s)})`).join(', ')}.`};const b=stood.findIndex((s,i)=>s!==want[i]),bad=stood[b];stood=[];draw();return{ok:false,msg:`${bad} is ${romanVal(bad)}, but ${want[b]} is only ${romanVal(want[b])}: it’s nearer.${/IV|IX|XL|XC/.test(bad+want[b])?' A small letter in front takes away.':''}`}}}},
     sign({v,step,gr,place,digits}){card('Gruff’s signpost');const sg=el('g',{transform:'translate(124,330)'},arena);el('rect',{x:-4,y:-60,width:8,height:170,fill:'#8a5a34'},sg);
       el('path',{d:'M-90,-80 H80 L100,-60 L80,-40 H-90Z',fill:'#e8d2a8',stroke:'#8a5a34','stroke-width':2},sg);el('text',{x:-4,y:-55,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#3a2418'},sg).textContent=`${place}: ${fmtR(v)} steps`;
       el('path',{d:'M-90,-30 H80 L100,-10 L80,10 H-90Z',fill:'#e8d2a8',stroke:'#8a5a34','stroke-width':2},sg);el('text',{x:-4,y:-5,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#c9413a'},sg).textContent=`about ${fmtR(gr)}`;
@@ -8861,7 +8863,7 @@ mount(root){
   const Q=[{t:'loot',v:[{A:72},{A:96},{A:56}]},{t:'pie',v:[{n:8,c:{sheep:4,goat:2,duck:2}},{n:6,per:2,c:{sheep:6,goat:4,duck:2}},{n:12,c:{sheep:6,goat:4,duck:2}}]},
     {t:'tiles',v:[{cols:5,rows:4,a:2,b:3},{cols:4,rows:4,a:3,b:1},{cols:6,rows:3,a:1,b:2}]},{t:'turn',v:[{t0:195,f:[3,4]},{t0:150,f:[1,2]},{t0:255,f:[5,4]}]},
     {t:'shop',v:[{n:3,p:45,purse:[100,50,50,20,20,10,10,5,5,2]},{n:4,p:35,purse:[100,50,20,20,10,5,5,2,1]},{n:3,p:25,purse:[50,50,20,10,5,5,2,2,1]}]},
-    {t:'roman',v:[{t0:420,t1:570,w:'half past IX',n:'9:30'},{t0:180,t1:285,w:'quarter to V',n:'4:45'},{t0:600,t1:735,w:'quarter past XII',n:'12:15'},{t0:240,t1:420,w:'VII o’clock',n:'7:00'}]},
+    {t:'roman',v:[{t0:435,t1:570,w:'half past IX',n:'9:30'},{t0:195,t1:285,w:'quarter to V',n:'4:45'},{t0:615,t1:735,w:'quarter past XII',n:'12:15'},{t0:255,t1:420,w:'VII o’clock',n:'7:00'}]},
     {t:'graph',v:[{s:100,d:20},{s:90,d:15},{s:100,d:25},{s:70,d:10}]}];
   const S={r:0,lives:3,busy:false,done:false,vr:{},intro:false};
   const V=()=>{const q=Q[S.r];return q.v[(S.vr[S.r]||0)%q.v.length]};
@@ -8968,7 +8970,7 @@ mount(root){
     later(7600,()=>{const s=navStone({label:'Play again',onTap:()=>{S.r=0;S.lives=3;S.done=false;S.vr={};S.intro=true;go('eclipse')}});s.ready(true)})}
   function intro(){EPOCH++;arena.innerHTML='';pane.innerHTML='';S.busy=false;navDots(Q.length,0,true);drawLives();drawPhases();ec.setCover(1);loop(dt=>{loopT+=dt;ec.tick(loopT)});
     decQ(qL,[['t','The Eclipse']],false,null);const b=el('g',{transform:'translate(240,300)'},arena);el('rect',{x:-200,y:-110,width:400,height:200,rx:18,fill:'#2a2048',stroke:'#ff7eb6','stroke-width':3},b);
-    ['Hee hee! It was ME all along!','I sent the Gloom, the Muddler, the Magpie,','the Kraken, the Smudge, the Inkblot, the Snooze,','Captain Grabbit AND Fudge, to muddle every world,','so I could gobble up the moon!'].forEach((t,i)=>el('text',{y:-62+i*30,'text-anchor':'middle','font-size':i?14:18,'font-weight':800,fill:i?'#e8dcff':'#ff7eb6'},b).textContent=t);
+    ['Hee hee! It was ME all along!','I sent the Gloom, the Muddler, the Magpie,','the Kraken, the Smudge, the Inkblot, the Snooze,','Captain Grabbit, Fudge AND Gruff, to muddle every world,','so I could gobble up the moon!'].forEach((t,i)=>el('text',{y:-62+i*30,'text-anchor':'middle','font-size':i?14:18,'font-weight':800,fill:i?'#e8dcff':'#ff7eb6'},b).textContent=t);
     decGo(arena,560,500,'Begin: face the Eclipse',()=>{SFX.pop(1.2);S.intro=true;load()},'Go');
     say('Seven puzzles, each from two worlds. Every right answer pushes the shadow off the moon!')}
   function load(){if(!S.intro)return intro();EPOCH++;FX.innerHTML='';arena.innerHTML='';pane.innerHTML='';S.busy=false;navDots(Q.length,S.r,true);drawLives();drawPhases();ec.setCover(1-S.r/Q.length);

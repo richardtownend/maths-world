@@ -51,14 +51,15 @@ mount(root){
     later(Math.min(v,M)*(q.digits?70:110)+500,()=>{const want=ro?S.dexAt:S.n;
       if(!ro&&(S.toks.filter(t=>t==='I').length>=5||S.toks.filter(t=>t==='V').length>=2)&&v===S.n){S.busy=false;lit.remove();say(S.toks.filter(t=>t==='I').length>=5?'The right number of miles, but five sticks in a row is hard to read. Tap them to bundle them into a V.':'Right number of miles! But two Vs should be joined into an X.');SFX.clonk();return}
       if(v===want){win();return}
-      SFX.wrong();shake(2);say(ro?(v>S.dexAt?`The stone says further than that. Count the X’s as ten and the V as five.`:`The stone says not so far. ${S.str}: X is ten, V is five, each I is one.`):v<S.n?(q.digits?`The stone only reaches ${v}. You need ${S.n}.`:'The lights stop before Dex: he walked further than the stone says.'):(q.digits?`The stone goes past ${S.n}: that’s ${v}.`:'The lights go past Dex: the stone says too many miles.'));later(2600,()=>{lit.remove();S.busy=false})})}
+      if(ro){SFX.wrong();shake(2);lit.remove();say(`Not that post. X is ten, V is five, each I is one. Here’s another stone…`);later(3000,()=>load(true));return}
+      SFX.wrong();shake(2);say(v<S.n?(q.digits?`The stone only reaches ${v}. You need ${S.n}.`:'The lights stop before Dex: he walked further than the stone says.'):(q.digits?`The stone goes past ${S.n}: that’s ${v}.`:'The lights go past Dex: the stone says too many miles.'));later(2600,()=>{lit.remove();S.busy=false})})}
   function win(){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();if(dex)dex.cheer();decQ(qL,parts(true),true,guide);burst(250,440,{n:14});
     const q=R[S.r],r=q.mode==='read'?S.str:toRoman(S.n),nx=(r.match(/X/g)||[]).length,nv=(r.match(/V/g)||[]).length,ni=(r.match(/I/g)||[]).length;
     say(`${r}: ${[nx&&`${nx===1?'one ten':nx+' tens'} (X)`,nv&&'a five (V)',ni&&`${ni} one${ni>1?'s':''} (I)`].filter(Boolean).join(', ')}. That’s ${q.mode==='read'?romanVal(S.str):S.n} miles.`);
     if(S.r>=2)unlock('rsticks');later(1400,()=>st.ready(true))}
   function walkTo(k,done){const x0=X0-6,x1=px(k)-14;S.busy=true;let d=0;tween(Math.min(4200,600+k*170),(t,p)=>{const x=lerp(x0,x1,p);dex.put(x,RY+30);dex.step(x)},()=>{S.busy=false;done&&done()},ease.lin)}
-  function load(){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=R[S.r];
-    Object.assign(S,{busy:false,won:false,toks:[],dexAt:0,n:q.ns?pick(q.ns):0,str:q.ss?pick(q.ss):''});
+  function load(again){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=R[S.r],prevS=S.str;
+    Object.assign(S,{busy:false,won:false,toks:[],dexAt:0,n:q.ns?pick(q.ns):0,str:q.ss?pick(again&&q.ss.length>1?q.ss.filter(x=>x!==prevS):q.ss):''});
     const top=q.mode==='read'?romanVal(S.str):S.n;M=Math.max(12,top+4);sp=Math.min(38,(568-X0)/M);
     st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawRoad();drawStone();go=decGo(ui,548,470,'Check the stone',check,'Check');
     if(q.mode==='read'){S.toks=[...S.str];drawStone();drawDex(0);

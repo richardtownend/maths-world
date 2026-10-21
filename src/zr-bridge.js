@@ -3,14 +3,14 @@ W.bridge={scene:'road',
 notes:`<p>Why rounding matters: a quick, safe guess. The old bridge has a weight limit and Dex's sacks have awkward weights (487 kg, 312 kg…). She rounds each sack to the nearest 100 by stacking 100 kg crates under it, and the crates pile up into one tower beside the bridge's limit line. Check the crates, then decide: cross, or too heavy? Crossing when it's too heavy cracks the bridge; if it's too heavy she taps a sack to leave behind. Later rounds use 10 kg and 1,000 kg crates, and one round checks Dex's own sum (398 + 207 = 905?): about right, or way off?</p>`,
 mount(root){
   const pick=a=>a[Math.floor(Math.random()*a.length)];
-  const R=[{unit:100,limit:1000,vars:[[210,390,180],[320,140,270],[180,260,410]]},{unit:100,limit:1000,vars:[[480,320,290],[510,370,260],[440,390,330]]},
-    {unit:10,limit:100,vars:[[47,38,21],[52,33,26],[44,36,28]]},{unit:100,sum:1,vars:[[398,207,905],[512,289,801],[296,403,699],[512,289,1101],[296,403,499]]},{unit:1000,limit:4000,vars:[[1210,2380],[2640,1830],[870,2240],[2710,1580]]}];
+  const R=[{unit:100,limit:1000,vars:[[210,390,180],[320,140,270],[180,260,410],[380,290,410]]},{unit:100,limit:1000,vars:[[480,320,290],[510,370,260],[440,390,330],[310,260,180]]},
+    {unit:10,limit:100,vars:[[47,38,21],[52,33,26],[33,24,31],[44,36,28]]},{unit:100,sum:1,vars:[[398,207,905],[512,289,801],[296,403,699],[512,289,1101],[296,403,499]]},{unit:1000,limit:4000,vars:[[1210,2380],[2640,1830],[870,2240],[2710,1580]]}];
   const S={r:0,busy:false,won:false,w:[],n:[],phase:'stack',left:null,q:null};
   const scene=el('g',{},root),cartL=el('g',{},root),stk=el('g',{},root),qL=el('g',{},root),ui=el('g',{},root);const guide=dexGuide(ui);let cart=null,go=null;
   const st=navStone({label:'Next load',onTap:()=>{S.r=(S.r+1)%R.length;load()}});
   navStone({glyph:'redo',label:'Start this load again',onTap:()=>load()});
   const kg=v=>`${fmtR(v)} kg`,CX=k=>S.w.length===2?[170,300][k]:[130,250,370][k],BASE=480,CH=21,unitLbl=()=>fmtR(S.q.unit);
-  const parts=done=>{const q=S.q;if(q.sum)return[['w',fmtR(S.w[0])],['o','+'],['w',fmtR(S.w[1])],['o','='],['w',fmtR(q.claim)],['t',done?'way off!':'right?']];
+  const parts=done=>{const q=S.q;if(q.sum)return[['w',fmtR(S.w[0])],['o','+'],['w',fmtR(S.w[1])],['o','='],['w',fmtR(q.claim)],['t','\u00a0'+(done?(Math.abs(q.claim-(S.w[0]+S.w[1]))>q.unit?'way off!':'about right'):'right?')]];
     const p=[];S.w.forEach((w,i)=>{if(i)p.push(['o','+']);p.push(['w',fmtR(w)])});p.push(['o','≈']);p.push(done?['w',fmtR(est())]:['o','?']);return p};
   const est=()=>S.n.reduce((a,n,i)=>a+(i===S.left?0:n*S.q.unit),0);
   function drawScene(){scene.innerHTML='';const q=S.q;
@@ -35,23 +35,23 @@ mount(root){
     if(!q.sum){/* the tower: every crate piled up beside the bridge's limit line */
       const tx=508,tot=S.n.reduce((a,n,i)=>a+(i===S.left?0:n),0),lim=q.limit/q.unit,top=BASE-Math.max(lim,tot)*CH,tg=el('g',{},stk);
       el('text',{x:tx,y:BASE+26,'text-anchor':'middle','font-size':12,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},tg).textContent='all the crates';
-      for(let k=0;k<tot;k++)crate(tg,tx,BASE-k*CH,unitLbl(),k>=lim?'#e8705a':'#c98a4a');
+      for(let k=0;k<tot;k++)crate(tg,tx,BASE-k*CH,unitLbl());
       const ly=BASE-lim*CH;el('line',{x1:tx-40,x2:tx+40,y1:ly,y2:ly,stroke:'#e8413e','stroke-width':3,'stroke-dasharray':'6 4'},tg);el('text',{x:tx,y:ly-6,'text-anchor':'middle','font-size':11,'font-weight':800,fill:'#fff4e6',stroke:'#8a1a1a','stroke-width':3,'paint-order':'stroke'},tg).textContent=`limit ${kg(q.limit)}`}}
   function setGo(label,fn,txt){if(go)go.remove();go=decGo(ui,548,130,label,fn,txt)}
   function chips(list){[...ui.querySelectorAll('.dchip')].forEach(n=>n.remove());list.forEach(([t,fn],i)=>{const g=el('g',{class:'dchip',transform:`translate(${list.length===1?300:190+i*180},${BASE+34})`},ui);el('rect',{x:-80,y:-20,width:160,height:40,rx:12,fill:i?'#e8705a':'#3aa86a',stroke:'#fff4e6','stroke-width':2},g);
     el('text',{y:6,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#fff'},g).textContent=t;interact(g,{label:t,tap:()=>{if(S.busy||S.won)return;SFX.pop(1.1);fn()}});popIn(g,.5)})}
   function checkStacks(){if(S.busy||S.won||S.phase!=='stack')return;const q=S.q;if(S.n.every(n=>!n)){say(`Stack ${unitLbl()} kg crates under each sack: round it to the nearest ${unitLbl()}.`);return}
     const bad=S.w.findIndex((w,i)=>S.n[i]*q.unit!==roundTo(w,q.unit));
-    if(bad>=0){SFX.wrong();shake(2);const w=S.w[bad],r=roundTo(w,q.unit);say(`${fmtR(w)} rounds to ${fmtR(r)} (it’s nearer ${fmtR(r)} than ${fmtR(r+(w<r?-q.unit:q.unit))}), so that’s ${r/q.unit} crate${r/q.unit===1?'':'s'}.`);return}
+    if(bad>=0){SFX.wrong();shake(2);const w=S.w[bad];S.n[bad]=0;drawStacks();say(`Not the ${fmtR(w)}${q.sum?'':' kg'} sack: which ${unitLbl()} is it nearest? Stack its crates again.`);return}
     SFX.chime();S.phase='decide';drawStacks();if(go){go.remove();go=null}
     if(q.sum){say(`Roughly ${fmtR(S.n[0]*q.unit)} + ${fmtR(S.n[1]*q.unit)} = ${fmtR(est())}. Dex says ${fmtR(q.claim)}. Is he about right?`);chips([['About right',()=>decide(false)],['Way off!',()=>decide(true)]])}
     else{say(`The crates come to about ${kg(est())}. The bridge takes ${kg(q.limit)}. Safe to cross?`);chips([['Cross the bridge',()=>decide(false)],['Too heavy!',()=>decide(true)]])}}
   function decide(heavy){const q=S.q;[...ui.querySelectorAll('.dchip')].forEach(n=>n.remove());
     if(q.sum){const off=Math.abs(q.claim-(S.w[0]+S.w[1]))>q.unit;if(heavy===off){win(`${fmtR(S.w[0])} + ${fmtR(S.w[1])} is really ${fmtR(S.w[0]+S.w[1])}. ${off?'The rough answer spotted the slip!':'The rough answer says it’s about right.'}`);return}
-      SFX.wrong();shake(2);say(off?`About ${fmtR(est())}, but Dex says ${fmtR(q.claim)}: that’s nowhere near. It’s way off.`:`About ${fmtR(est())} and Dex says ${fmtR(q.claim)}: close enough to trust.`);S.phase='decide';later(2800,()=>{chips([['About right',()=>decide(false)],['Way off!',()=>decide(true)]]);say('Is Dex about right?')});return}
+      S.busy=true;SFX.wrong();shake(2);say(`Compare Dex’s answer with your rough one, ${fmtR(est())}. Here’s another sum…`);later(3200,()=>load(true));return}
     const over=est()>q.limit;
     if(!heavy){if(over){crack();return}cross();return}
-    if(!over){SFX.wrong();say(`The crates are under the red line: ${kg(est())} is less than ${kg(q.limit)}. It’s safe!`);later(2600,()=>chips([['Cross the bridge',()=>decide(false)],['Too heavy!',()=>decide(true)]]));return}
+    if(!over){S.busy=true;SFX.wrong();say(`Look at the crate tower and the red line again. Here’s another load…`);later(3200,()=>load(true));return}
     S.phase='leave';drawStacks();say('Too heavy! Tap a sack for Dex to leave behind.')}
   function leave(i){if(S.busy||S.won)return;S.left=i;SFX.pop(.8);drawStacks();drawCart();if(est()>S.q.limit){say('Still over the line. Try leaving a different sack.');S.left=null;later(1600,()=>{drawStacks();drawCart()});return}
     S.phase='decide';drawStacks();say(`Now about ${kg(est())}: under the line.`);later(900,cross)}
@@ -59,9 +59,9 @@ mount(root){
     win(`Safe across! Really ${kg(real)}, and the rough ${kg(est())} was enough to tell.`)},ease.inOut)}
   function crack(){S.busy=true;tween(1200,(t,p)=>cart.put(lerp(64,300,p),200+Math.max(0,p-.7)*40,0),()=>{SFX.crunch?SFX.crunch():noise(.4,.2,{f:400,q:.6});shake(8);S.bridge.setAttribute('transform','rotate(4 300 210)');
     const real=S.w.reduce((a,w)=>a+w,0);say(`Crrrack! About ${kg(est())} is more than ${kg(S.q.limit)} (really ${kg(real)}). The crates were over the red line.`);SFX.wrong();
-    later(3400,()=>{S.bridge.removeAttribute('transform');cart.put(64,200,0);S.busy=false;S.phase='decide';chips([['Cross the bridge',()=>decide(false)],['Too heavy!',()=>decide(true)]]);say('Cross, or too heavy?')})})}
+    later(3600,()=>load(true))})}
   function win(msg){S.won=true;S.busy=false;roundWon(S.r);SFX.fanfare();guide.cheer();decQ(qL,parts(true),true,guide);burst(300,240,{n:16});say(msg);if(S.r>=2)unlock('rbridge');later(1400,()=>st.ready(true))}
-  function load(){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=S.q=R[S.r],v=pick(q.vars);
+  function load(again){EPOCH++;FX.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);go=null;const q=S.q=R[S.r],pw=S.w&&S.w.join(),v=pick(again?q.vars.filter(x=>x.slice(0,S.w.length).join()!==pw):q.vars);
     Object.assign(S,{busy:false,won:false,phase:'stack',left:null});S.w=q.sum?v.slice(0,2):v.slice();q.claim=q.sum?v[2]:null;S.n=S.w.map(()=>0);
     st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawScene();drawCart();drawStacks();setGo('Check the crates',checkStacks,'Check');
     say(q.sum?`Dex added up two sacks. Round each to the nearest ${unitLbl()} with crates to check his answer.`:S.r===0?`Can Dex’s cart cross? Round each sack to the nearest 100 kg: stack that many 100 kg crates under it.`:`Round each sack with ${unitLbl()} kg crates, then decide.`)}

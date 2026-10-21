@@ -27,9 +27,9 @@ mount(root){
   function judgeMany(){const want=new Set(S.carts.filter(c=>c.end===40).map(c=>c.v)),got=S.sel;
     if(want.size===got.size&&[...want].every(v=>got.has(v))){win(40);return}SFX.wrong();shake(2);
     const missed=[...want].filter(v=>!got.has(v)),wrong=[...got].filter(v=>!want.has(v));
-    say(wrong.length?`${wrong[0]} rolled to ${roundTo(wrong[0],10)}, not 40.${wrong[0]%10===5?' Halfway rounds up!':''}`:`${missed[0]} rolled to 40 too: it’s nearer 40 than ${missed[0]<40?30:50}.`);later(3600,()=>{S.busy=false;load(true)})}
+    say(wrong.length?`${wrong[0]} rolled to ${roundTo(wrong[0],10)}, not 40.${wrong[0]%10===5?' Exactly halfway, so the wind blew it on.':''}`:missed[0]%10===5?`${missed[0]} is exactly halfway, so the wind blew it on to 40.`:`${missed[0]} rolled to 40 too: it’s nearer 40 than ${missed[0]<40?30:50}.`);later(3600,()=>{S.busy=false;load(true)})}
   function win(end){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(road.xOf(end),road.yOf(end)-30,{n:16});const q=R[S.r];
-    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')}: all nearer 40 than any other milestone (35 is halfway, so it goes up).`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway: the wind blows it on. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
+    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')} all end up at 40${S.sel.has(35)?' (35 is exactly halfway, so the wind blows it on)':''}.`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway: the wind blows it on. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
     if(S.r>=2)unlock('rhills');later(1400,()=>st.ready(true))}
   function load(again){EPOCH++;FX.innerHTML='';cartL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);flag=null;const q=R[S.r];
     const prev=S.v;Object.assign(S,{busy:false,won:false,at:null,pick:null,sel:new Set(),carts:[]});S.v=q.vs?pick(q.vs.filter(v=>v!==prev).length?q.vs.filter(v=>v!==prev):q.vs):0;
