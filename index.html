@@ -134,6 +134,15 @@ body.inhub .worlds,body.athub #homeBtn{visibility:hidden}
 .pcard{display:flex;flex-direction:column;align-items:center;gap:6px;width:132px;padding:14px 8px 12px;border:0;border-radius:22px;background:var(--glass);cursor:pointer;font-weight:600;font-size:1.05rem;transition:background .2s,transform .2s}
 .pcard:hover,.pcard:focus-visible{background:var(--glass-2);transform:translateY(-3px)}
 .pcard .av{width:96px;height:96px;overflow:visible}
+.pwrap{position:relative}
+.plook{position:absolute;top:-8px;right:-8px;width:44px;height:44px;border-radius:50%;border:0;background:var(--gold);color:var(--sky2);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.plook svg{width:24px;height:24px}
+#lookBig{display:flex;justify-content:center;margin:-6px 0 6px}#lookBig .av{width:150px;height:150px;overflow:visible}
+.looks{display:grid;grid-template-columns:repeat(3,96px);gap:10px;justify-content:center;margin-bottom:14px}
+.looks button{width:96px;height:96px;border-radius:20px;border:3px solid transparent;background:var(--glass);cursor:pointer;padding:4px}
+.looks button[aria-pressed="true"]{border-color:var(--gold);background:var(--glass-2)}
+.looks .av{width:100%;height:100%;overflow:visible}
+.lookcols{justify-content:center;margin-bottom:18px}.lookcols .cdot{width:42px;height:42px}
 .pcard.grown{color:var(--ink-soft);font-size:.92rem}
 .hint{color:var(--ink-soft);margin-top:18px}
 .pindots{display:flex;gap:16px;justify-content:center;margin:0 0 22px}
@@ -279,6 +288,7 @@ body.inhub .worlds,body.athub #homeBtn{visibility:hidden}
 <svg id="dock" viewBox="0 0 230 70" aria-label="Round controls"></svg>
 </div>
 <div class="scr" id="whoScr" hidden role="dialog" aria-labelledby="whoT"><div class="scr-in"><h2 id="whoT">Who’s playing?</h2><div class="cards" id="whoCards"></div><p class="hint" id="whoHint"></p></div></div>
+<div class="scr" id="lookScr" hidden role="dialog" aria-labelledby="lookT"><div class="scr-in"><h2 id="lookT">Pick your creature</h2><div id="lookBig"></div><div class="looks" id="lookList" role="group" aria-label="Creature"></div><div class="cols lookcols" id="lookCols" role="group" aria-label="Colour"></div><button class="chip gold" id="lookOk">Done</button></div></div>
 <div class="scr" id="pinScr" hidden role="dialog" aria-labelledby="pinT"><div class="scr-in"><h2 id="pinT">Grown-up PIN</h2><div class="pindots" id="pinDots"><i></i><i></i><i></i><i></i></div><div class="pad" id="pinPad"></div></div></div>
 <div class="scr dim" id="clearCard" hidden role="dialog" aria-labelledby="ccT"><div class="ccard"><div id="ccIcon"></div><h2 id="ccT"></h2><p id="ccP"></p><div class="crow"><button class="chip" id="ccStay">Stay here</button><button class="chip gold" id="ccNext"></button></div></div></div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-labelledby="sheetT"><div class="in"><button class="tool x" id="sheetX" aria-label="Close"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M7 7l12 12M19 7 7 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><div id="sheetBody"></div></div></div>
@@ -321,18 +331,26 @@ document.addEventListener('visibilitychange',()=>{if(!AC)return;try{if(document.
 addEventListener('pagehide',()=>{try{if(AC){ambStop();AC.suspend()}}catch(e){}});
 function outTo(node,wet){node.connect(MASTER);if(wet&&ECHO){const g=AC.createGain();g.gain.value=wet;node.connect(g);g.connect(ECHO)}}
 function env(g,t,a,peak,d){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)}
+/* while the background is playing its little sounds, anything low or long (rumbles, waves, hums) is dropped: no drones */
+let AMB_GATE=false;
 function osc(type,f,dur,vol,{to,wet=.25,a=.006,at=0,det=0,lfo=0,lfoDepth=0,lp=0}={}){
-  if(!live())return;try{const t=AC.currentTime+at,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+dur);o.detune.value=det;
+  if(!live()||(AMB_GATE&&(f<300||dur>1)))return;try{const t=AC.currentTime+at,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+dur);o.detune.value=det;
     let n=o;if(lp){const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=lp;o.connect(fl);n=fl}
     if(lfo){const l=AC.createOscillator(),lg=AC.createGain();l.frequency.value=lfo;lg.gain.value=lfoDepth;l.connect(lg);lg.connect(g.gain);l.start(t);l.stop(t+a+dur+.05)}
     env(g,t,a,vol,dur);n.connect(g);outTo(g,wet);o.start(t);o.stop(t+a+dur+.05)}catch(e){}}
 function noise(dur,vol,{type='bandpass',f=1200,q=1,to,wet=.1,a=.003,at=0}={}){
-  if(!live())return;try{const t=AC.currentTime+at,s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=NOISE;fl.type=type;fl.frequency.setValueAtTime(f,t);if(to)fl.frequency.exponentialRampToValueAtTime(to,t+dur);fl.Q.value=q;
+  if(!live()||(AMB_GATE&&(type==='lowpass'||f<900||dur>1)))return;try{const t=AC.currentTime+at,s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=NOISE;fl.type=type;fl.frequency.setValueAtTime(f,t);if(to)fl.frequency.exponentialRampToValueAtTime(to,t+dur);fl.Q.value=q;
     env(g,t,a,vol,dur);s.connect(fl);fl.connect(g);outTo(g,wet);s.start(t,Math.random()*.5);s.stop(t+a+dur+.05)}catch(e){}}
 function bell(f,vol=.1,dur=.9,{at=0,wet=.4,ratio=3.5}={}){
-  if(!live())return;try{const t=AC.currentTime+at,c=AC.createOscillator(),m=AC.createOscillator(),mg=AC.createGain(),g=AC.createGain();
+  if(!live()||(AMB_GATE&&f<300))return;try{const t=AC.currentTime+at,c=AC.createOscillator(),m=AC.createOscillator(),mg=AC.createGain(),g=AC.createGain();
     c.frequency.value=f;m.frequency.value=f*ratio;mg.gain.setValueAtTime(f*1.8,t);mg.gain.exponentialRampToValueAtTime(f*.02,t+dur);m.connect(mg);mg.connect(c.frequency);
     env(g,t,.004,vol,dur);c.connect(g);outTo(g,wet);c.start(t);m.start(t);c.stop(t+dur+.1);m.stop(t+dur+.1)}catch(e){}}
+/* a soft piano note: a few sine partials, a quick strike and a long fade, mellowing as it dies away */
+function piano(f,vol=.02,{at=0,dur=2.6,wet=.55}={}){
+  if(!live())return;try{const t=AC.currentTime+at,g=AC.createGain(),lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(6000,f*7),t);lp.frequency.exponentialRampToValueAtTime(Math.max(400,f*1.6),t+dur);lp.connect(g);g.gain.value=vol;
+    [[1,1,1],[2,.42,.6],[3,.16,.38],[4,.07,.25]].forEach(([h,a,dk])=>{const o=AC.createOscillator(),og=AC.createGain();o.type='sine';o.frequency.value=f*h*(1+.0004*h*h);
+      og.gain.setValueAtTime(.0001,t);og.gain.exponentialRampToValueAtTime(a,t+.005);og.gain.exponentialRampToValueAtTime(.0001,t+dur*dk);o.connect(og);og.connect(lp);o.start(t);o.stop(t+dur+.1)});
+    outTo(g,wet)}catch(e){}}
 /* the older call shape, now through the magic chain */
 function tone(f,d=.14,type='sine',vol=.1,to){osc(type==='square'||type==='sawtooth'?'triangle':type,f,d,vol*.9,{to,wet:.22})}
 const sizeHz=s=>196/Math.sqrt(s);
@@ -382,11 +400,25 @@ function ambStop(){clearTimeout(AMB.timer);AMB.timer=null;clearTimeout(AMB.swell
 function ambient(kind){
   AMB.kind=kind;if(!live())return;ambStop();AMB.on=kind;
   const PAD={hills:[110,164.8],scales:[110,164.8],oven:[98,146.8],shop:[130.8,196],glass:[123.5,185],cave:[92.5,138.6],river:[103.8,155.6],gorge:[87.3,130.8],meadow:[116.5,174.6],patch:[103.8,155.6],desk:[98,146.8],picnic:[110,164.8],tower:[92.5,138.6],festival:[116.5,174.6],lair:[73.4,110],hub:[130.8,196],sea:[98,146.8],door:[98,146.8],lagoon:[110,164.8],chart:[98,146.8],whirl:[73.4,110],beach:[110,164.8],lamp:[87.3,130.8]}[kind]||[110,164.8];
-  /* no continuous drone: every so often a soft, high chord breathes in and fades away, with silence between */
-  const swell=()=>{if(AMB.kind!==kind||!live())return;const [f1,f2]=PAD,up=Math.random()<.5?2:1.5;
-    osc('sine',f1*2,5.5,.0045,{a:2.6,wet:.7});osc('sine',f2*up,5,.0035,{a:3,at:.4,wet:.7});
-    AMB.swell=setTimeout(swell,11000+Math.random()*9000)};
-  AMB.swell=setTimeout(swell,2500);
+  /* the music: short, gentle piano phrases on the same five notes as the game's chimes, with rests between.
+     Darker places lean on A (minor feel), the rest on C. Each phrase picks a shape: a wander, a climb, a fall, a chord, an echo or a pair */
+  const dark=['lair','cave','gorge','tower','whirl','grey','inky','night','lamp'].includes(kind),home=dark?-1:0;
+  const pz=d=>523.25*Math.pow(2,(PENTA[((d%5)+5)%5]+12*Math.floor(d/5))/12);
+  let pos=home+1+Math.floor(Math.random()*3),last='';
+  const phrase=()=>{if(AMB.kind!==kind||!live())return;
+    const v=.85+Math.random()*.3,step=[.34,.42,.5,.6][Math.floor(Math.random()*4)],notes=[];let t=0;
+    const add=(d,dt=step,len=2.4,vol=1)=>{d=Math.max(-5,Math.min(7,d));notes.push([d,t,len,vol]);t+=dt;pos=d};
+    let shapes=['wander','climb','fall','chord','echo','pair'].filter(x=>x!==last);const sh=shapes[Math.floor(Math.random()*shapes.length)];last=sh;
+    if(Math.random()<.45)piano((dark?110:130.8)*(Math.random()<.5?1:1.5),.016*v,{dur:4.5,wet:.6});
+    if(sh==='wander'){const n=3+Math.floor(Math.random()*4);for(let k=0;k<n;k++){const drift=pos>home+4?-1:pos<home-2?1:0;add(pos+([-2,-1,-1,1,1,2][Math.floor(Math.random()*6)]+drift)*(k?1:0),step*(Math.random()<.25?2:1))}}
+    else if(sh==='climb'){const s0=pos>home+2?pos-3:pos;for(let k=0;k<4;k++)add(s0+k)}
+    else if(sh==='fall'){const s0=pos<home+1?pos+3:pos;for(let k=0;k<4;k++)add(s0-k)}
+    else if(sh==='chord'){const b=Math.min(pos,home+3);[0,2,4].forEach((o,k)=>add(b+o,.06,3.2,k?.8:1));t+=step}
+    else if(sh==='echo'){const m=[pos,pos+1,pos-1],oc=pos>home+1?-5:5;m.forEach(d=>add(d));t+=step;m.forEach(d=>add(d+oc,step,2,.55))}
+    else{add(pos,step*1.5);add(pos+(Math.random()<.5?2:-2),step,3)}
+    notes.forEach(([d,at,len,vol],k)=>piano(pz(d),.02*v*vol,{at,dur:k===notes.length-1?len+1:len}));
+    AMB.swell=setTimeout(phrase,(t+5+Math.random()*7)*1000)};
+  AMB.swell=setTimeout(phrase,1500);
   const ev={
     hills:()=>{if(Math.random()<.6)for(let k=0;k<3;k++)osc('sine',4300+Math.random()*300,.03,.006,{at:k*.07,wet:.3});else bell(noteHz(5+Math.floor(Math.random()*8)),.012,1.6,{wet:.8})},
     oven:()=>{const n=2+Math.floor(Math.random()*5);for(let k=0;k<n;k++)noise(.02,.03+Math.random()*.04,{f:1500+Math.random()*2500,q:2,at:k*(.05+Math.random()*.15),wet:0});if(Math.random()<.15)noise(.6,.02,{type:'lowpass',f:300,a:.2,wet:0})},
@@ -404,7 +436,7 @@ function ambient(kind){
     gorge:()=>{const r=Math.random();if(r<.45)noise(2.4,.035,{f:400,to:900,q:.6,a:.9,wet:.4});else if(r<.75){const f=1800+Math.random()*900;osc('sine',f,.12,.012,{to:f*1.3,wet:.6});osc('sine',f*1.1,.1,.01,{to:f*.9,at:.18,wet:.6})}else osc('triangle',140+Math.random()*40,.3,.02,{to:110,lp:500,wet:.3})},
     cave:()=>{if(Math.random()<.6)osc('sine',900+Math.random()*900,.12,.03,{to:350,wet:.85});else bell(noteHz(8+Math.floor(Math.random()*6)),.012,2,{wet:.9,ratio:6.1})}
   }[kind]||AMB_X[kind]||(()=>{});
-  const tick=()=>{if(AMB.kind!==kind||!live())return;ev();AMB.timer=setTimeout(tick,(kind==='oven'?700:1600)+Math.random()*(kind==='oven'?1500:3200))};
+  const tick=()=>{if(AMB.kind!==kind||!live())return;AMB_GATE=true;try{ev()}finally{AMB_GATE=false}AMB.timer=setTimeout(tick,(kind==='oven'?700:1600)+Math.random()*(kind==='oven'?1500:3200))};
   AMB.timer=setTimeout(tick,1200);
 }
 function chime(){SFX.chime()}
@@ -1027,14 +1059,71 @@ function clearCard(w){const WW=worldOf(w),L=WW.isles,i=L.indexOf(w),nx=L[i+1],c=
   $('#ccStay').onclick=()=>{c.hidden=true};c.hidden=false;$('#ccNext').focus()}
 
 /* ---------- who's playing ---------- */
-function avatar(host,ci,r=24){const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','-36 -40 72 74');sv.setAttribute('aria-hidden','true');sv.classList.add('av');host.appendChild(sv);const c=creature(sv,{x:0,y:0,r,i:ci,label:'',shadow:true});CREATS.delete(c);return sv}
+/* a player's own creature: the classic blob, or a monster or alien of their choosing, in their colour */
+const LOOKS=[['blob','Blob'],['alien','Alien'],['horns','Horned monster'],['cyclops','One-eyed monster'],['squid','Squid alien'],['fuzzy','Fuzzball']];
+function buddy(parent,{x=0,y=0,r=24,i=0,look='blob',shadow=true}={}){
+  if(!look||look==='blob'){const c=creature(parent,{x,y,r,i,label:'',shadow});CREATS.delete(c);return c}
+  const col=CCOL[i%CCOL.length],dk=darker(col),ink='#241a3a',ivory='#fff4e6',f=n=>(n*r).toFixed(2);
+  const g=el('g',{transform:`translate(${x},${y})`},parent);
+  if(shadow)el('ellipse',{cx:0,cy:f(1.02),rx:f(.85),ry:f(.18),fill:'#0d0a24',opacity:.35},g);
+  const b=el('g',look==='squid'?{transform:`translate(0,${f(-.08)}) scale(1.18)`}:{},g);
+  const feet=()=>[-1,1].forEach(s=>el('ellipse',{cx:f(s*.36),cy:f(.92),rx:f(.24),ry:f(.13),fill:dk},b));
+  const eye=(ex,ey,er,dx=0)=>{el('circle',{cx:f(ex),cy:f(ey),r:f(er),fill:'#fffaf2'},b);el('circle',{cx:f(ex+dx),cy:f(ey+er*.1),r:f(er*.52),fill:ink},b);el('circle',{cx:f(ex+dx-er*.18),cy:f(ey-er*.12),r:f(er*.17),fill:'#fff'},b)};
+  const shine=()=>el('ellipse',{cx:f(-.34),cy:f(-.45),rx:f(.24),ry:f(.13),fill:'#fff',opacity:.28,transform:`rotate(-20 ${f(-.34)} ${f(-.45)})`},b);
+  const cheeks=(cy=.2)=>[-1,1].forEach(s=>el('ellipse',{cx:f(s*.55),cy:f(cy),rx:f(.12),ry:f(.07),fill:'#ff6f91',opacity:.35},b));
+  if(look==='alien'){
+    [-1,1].forEach(s=>{el('path',{d:`M${f(s*.28)},${f(-.72)} Q${f(s*.4)},${f(-1.2)} ${f(s*.66)},${f(-1.3)}`,stroke:dk,'stroke-width':f(.09),fill:'none','stroke-linecap':'round'},b);el('circle',{cx:f(s*.66),cy:f(-1.3),r:f(.15),fill:'#e6ff8a'},b)});
+    feet();el('path',{d:`M0,${f(-.95)} C${f(1.12)},${f(-.95)} ${f(1.0)},${f(.3)} ${f(.42)},${f(.86)} Q0,${f(1.02)} ${f(-.42)},${f(.86)} C${f(-1.0)},${f(.3)} ${f(-1.12)},${f(-.95)} 0,${f(-.95)}Z`,fill:col},b);shine();
+    [-1,1].forEach(s=>{el('ellipse',{cx:f(s*.34),cy:f(-.18),rx:f(.27),ry:f(.17),fill:ink,transform:`rotate(${s*28} ${f(s*.34)} ${f(-.18)})`},b);el('circle',{cx:f(s*.34-.08),cy:f(-.24),r:f(.06),fill:'#fff'},b)});
+    el('path',{d:`M${f(-.13)},${f(.36)} q${f(.13)},${f(.11)} ${f(.26)},0`,stroke:ink,'stroke-width':Math.max(1.2,r*.08),fill:'none','stroke-linecap':'round'},b)}
+  else if(look==='horns'){
+    [-1,1].forEach(s=>el('path',{d:`M${f(s*.32)},${f(-.78)} Q${f(s*.95)},${f(-.95)} ${f(s*.86)},${f(-1.42)} Q${f(s*.62)},${f(-1.02)} ${f(s*.12)},${f(-.9)}Z`,fill:ivory,stroke:'#d9c8b0','stroke-width':f(.04)},b));
+    feet();el('path',{d:blobPath(r,1.06,.98,2.2),fill:col},b);shine();
+    el('ellipse',{cx:0,cy:f(.42),rx:f(.48),ry:f(.34),fill:'#fff',opacity:.16},b);
+    eye(-.3,-.2,.22,.03);eye(.3,-.2,.22,-.03);
+    [-1,1].forEach(s=>el('path',{d:`M${f(s*.52)},${f(-.5)} L${f(s*.12)},${f(-.4)}`,stroke:dk,'stroke-width':f(.1),'stroke-linecap':'round'},b));
+    el('path',{d:`M${f(-.46)},${f(.14)} Q0,${f(.66)} ${f(.46)},${f(.14)}Z`,fill:ink},b);
+    [-1,1].forEach(s=>el('path',{d:`M${f(s*.36)},${f(.17)} l${f(-s*.08)},${f(.18)} l${f(-s*.09)},${f(-.16)}Z`,fill:'#fff'},b))}
+  else if(look==='cyclops'){
+    el('path',{d:`M${f(-.14)},${f(-1.0)} L0,${f(-1.42)} L${f(.14)},${f(-1.0)}Z`,fill:ivory,stroke:'#d9c8b0','stroke-width':f(.04)},b);
+    feet();el('path',{d:blobPath(r,.96,1.1,4.1),fill:col},b);shine();cheeks(.25);
+    el('circle',{cx:0,cy:f(-.22),r:f(.44),fill:'#fffaf2'},b);el('circle',{cx:0,cy:f(-.18),r:f(.26),fill:dk},b);el('circle',{cx:0,cy:f(-.18),r:f(.15),fill:ink},b);el('circle',{cx:f(-.08),cy:f(-.27),r:f(.07),fill:'#fff'},b);
+    el('path',{d:`M${f(-.36)},${f(.36)} Q0,${f(.72)} ${f(.36)},${f(.36)}Z`,fill:ink},b);
+    el('path',{d:`M${f(-.3)},${f(.38)} l${f(.1)},${f(.12)} l${f(.1)},${f(-.1)} l${f(.1)},${f(.12)} l${f(.1)},${f(-.1)} l${f(.1)},${f(.12)} l${f(.1)},${f(-.12)}Z`,fill:'#fff'},b)}
+  else if(look==='squid'){
+    [-.62,-.31,0,.31,.62].forEach((o,k)=>el('path',{d:`M${f(o)},${f(.2)} q${f(.14*(k%2?1:-1))},${f(.35)} ${f(0)},${f(.55)} t${f(o*.25)},${f(.25)}`,stroke:dk,'stroke-width':f(.2),fill:'none','stroke-linecap':'round'},b));
+    el('path',{d:`M${f(-.92)},${f(.35)} C${f(-.98)},${f(-1.15)} ${f(.98)},${f(-1.15)} ${f(.92)},${f(.35)} Q0,${f(.55)} ${f(-.92)},${f(.35)}Z`,fill:col},b);shine();
+    [[-.5,-.52,.1],[.42,-.62,.08],[.6,-.2,.07]].forEach(([cx,cy,rr])=>el('circle',{cx:f(cx),cy:f(cy),r:f(rr),fill:'#fff',opacity:.22},b));
+    eye(-.28,-.12,.2);eye(.28,-.12,.2);eye(0,-.48,.15);
+    el('ellipse',{cx:0,cy:f(.24),rx:f(.08),ry:f(.09),fill:ink},b)}
+  else if(look==='fuzzy'){
+    feet();let d='';const n=22;for(let k=0;k<=n;k++){const a=k/n*Math.PI*2-Math.PI/2,rr=k%2?.82:1.0,px=Math.cos(a)*rr,py=Math.sin(a)*rr*.95;d+=(k?' L':'M')+f(px)+','+f(py)}
+    el('path',{d:d+'Z',fill:col,'stroke-linejoin':'round',stroke:col,'stroke-width':f(.08)},b);
+    el('circle',{r:f(.72),fill:'#fff',opacity:.1},b);
+    eye(-.28,-.16,.24,.04);eye(.28,-.16,.24,-.04);cheeks(.22);
+    el('path',{d:`M${f(-.2)},${f(.3)} q${f(.2)},${f(.18)} ${f(.4)},0`,stroke:ink,'stroke-width':Math.max(1.2,r*.08),fill:'none','stroke-linecap':'round'},b);
+    el('rect',{x:f(-.06),y:f(.36),width:f(.12),height:f(.12),rx:f(.02),fill:'#fff'},b)}
+  return{g}}
+function avatar(host,ci,r=24,look){const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','-36 -40 72 74');sv.setAttribute('aria-hidden','true');sv.classList.add('av');host.appendChild(sv);buddy(sv,{r,i:ci,look});return sv}
 function showWho(){const scr=$('#whoScr'),box=$('#whoCards');box.innerHTML='';$('#sheet').hidden=true;
-  ST.players.forEach(p=>{const b=document.createElement('button');b.className='pcard';b.dataset.pl=p.id;avatar(b,p.ci);const n=document.createElement('span');n.textContent=p.name;b.appendChild(n);
-    b.addEventListener('click',()=>{unlockAudio();SFX.pop(1.2);PL=p.id;scr.hidden=true;start()});box.appendChild(b)});
+  ST.players.forEach(p=>{const w=document.createElement('div');w.className='pwrap';const b=document.createElement('button');b.className='pcard';b.dataset.pl=p.id;avatar(b,p.ci,24,p.look);const n=document.createElement('span');n.textContent=p.name;b.appendChild(n);
+    b.addEventListener('click',()=>{unlockAudio();SFX.pop(1.2);PL=p.id;scr.hidden=true;start()});w.appendChild(b);
+    const lk=document.createElement('button');lk.className='plook';lk.setAttribute('aria-label',`Change ${p.name}’s creature`);
+    lk.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5L9 20H4v-5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12.5 6.5l5 5" stroke="currentColor" stroke-width="2.2"/></svg>';
+    lk.addEventListener('click',()=>{unlockAudio();SFX.pop(1.4);showLook(p.id)});w.appendChild(lk);box.appendChild(w)});
   const g=document.createElement('button');g.className='pcard grown';g.dataset.pl='g';g.innerHTML=`<svg class="av" viewBox="-36 -40 72 74" aria-hidden="true"><circle r="27" fill="#2c2356" stroke="rgba(255,240,160,.5)" stroke-width="2"/><rect x="-11" y="-3" width="22" height="18" rx="4" fill="#ffc04d"/><path d="M-6 -3v-6a6 6 0 0 1 12 0v6" fill="none" stroke="#ffc04d" stroke-width="3.5"/><circle cy="5" r="2.6" fill="#3a2418"/></svg><span>${ST.pin?'Grown-up':'Set up'}</span>`;
   g.addEventListener('click',()=>{unlockAudio();SFX.pop(.9);askPin(ST.pin?'enter':'new1')});box.appendChild(g);
   $('#whoHint').textContent=ST.players.length?'':'First time here? A grown-up sets a PIN, then adds the players.';
   scr.hidden=false;const f=box.querySelector('.pcard');if(f)f.focus()}
+/* the creature picker: any player can choose their own look and colour */
+function showLook(id){const p=ST.players.find(x=>x.id===id);if(!p)return;const scr=$('#lookScr');$('#lookT').textContent=`Pick your creature, ${p.name}`;
+  const draw=()=>{const big=$('#lookBig');big.innerHTML='';avatar(big,p.ci,24,p.look);
+    const L=$('#lookList');L.innerHTML='';LOOKS.forEach(([k,nm])=>{const b=document.createElement('button');b.setAttribute('aria-label',nm);b.setAttribute('aria-pressed',(p.look||'blob')===k);avatar(b,p.ci,24,k);
+      b.addEventListener('click',()=>{p.look=k;save();SFX.pop(1+LOOKS.findIndex(x=>x[0]===k)*.08);draw()});L.appendChild(b)});
+    const C=$('#lookCols');C.innerHTML='';PCOL.forEach((ci,k)=>{const b=document.createElement('button');b.className='cdot';b.style.background=CCOL[ci];b.setAttribute('aria-label',`Colour ${k+1}`);b.setAttribute('aria-pressed',p.ci===ci);
+      b.addEventListener('click',()=>{p.ci=ci;save();SFX.tick(k);draw()});C.appendChild(b)})};
+  draw();scr.hidden=false;$('#lookOk').focus()}
+$('#lookOk').addEventListener('click',()=>{SFX.chime();$('#lookScr').hidden=true;showWho()});
 function start(){save();document.body.classList.toggle('goggles',GOG);jarIcon();go('hub')}
 
 /* ---------- the grown-up PIN (a latch for little fingers, not real security) ---------- */
@@ -8354,9 +8443,9 @@ function bridge(parent,a,b,lit,s=1){const x0=a.x+(b.x-a.x)*.3,y0=a.y+(b.y-a.y)*.
   for(let k=1;k<6;k++){const t=k/6,px=(1-t)*(1-t)*x0+2*(1-t)*t*mx+t*t*x1,py=(1-t)*(1-t)*y0+2*(1-t)*t*my+t*t*y1;el('path',{d:`M${px.toFixed(1)},${py.toFixed(1)} v${(-6*s).toFixed(1)}`,stroke:lit?'#c9a24a':'rgba(201,184,238,.3)','stroke-width':2*s},g)}
   if(lit)el('path',{d:`M${x0},${y0} Q${mx},${my} ${x1},${y1}`,fill:'none',stroke:'#fff0a0','stroke-width':4*s,opacity:.18,filter:'url(#glow)'},g);return g}
 /* the player's hot-air balloon, in their creature's colour */
-function balloon(parent,ci){const g=el('g',{},parent),inner=el('g',{},g),col=CCOL[ci%CCOL.length];
+function balloon(parent,ci,look){const g=el('g',{},parent),inner=el('g',{},g),col=CCOL[ci%CCOL.length];
   el('path',{d:'M-6,-4 L-8,9 M6,-4 L8,9',stroke:'#c9a77a','stroke-width':1.2},inner);
-  const cr=creature(inner,{x:0,y:6,r:8,i:ci,label:'',shadow:false});CREATS.delete(cr);
+  const cr=buddy(inner,{x:0,y:5,r:9,i:ci,look,shadow:false});
   el('path',{d:'M-10,8 h20 l-2,10 h-16Z',fill:'#a8743a',stroke:'#6a4420','stroke-width':1},inner);el('path',{d:'M-9,12 h18',stroke:'#6a4420','stroke-width':.8},inner);
   el('path',{d:'M0,-62 C24,-62 32,-42 28,-28 C24,-15 11,-9 6,-4 L-6,-4 C-11,-9 -24,-15 -28,-28 C-32,-42 -24,-62 0,-62Z',fill:col},inner);
   el('path',{d:'M0,-62 C9,-54 10,-16 4,-4 L-4,-4 C-10,-16 -9,-54 0,-62Z',fill:'#fff4e6',opacity:.6},inner);
@@ -8500,11 +8589,11 @@ mount(root){hubDefs(root);
     flying=true;SFX.pop(1.2);CURW='eclipse';flyTo(all,300,300,()=>go('eclipse'))}});
   /* the player's balloon floats by the world they last played */
   const lastW=me&&ST.last[PL]?worldOf(ST.last[PL]).id:'starter',lm=lastW==='eclipse'?{id:'eclipse',cx:450,cy:380,rx:20,ry:20}:models.find(m=>m.id===lastW)||models[0];
-  const bal=me?balloon(wld,me.ci):null;if(bal)bal.g.style.pointerEvents='none';let bx=lm.cx+(lm.id==='starter'?78:-70),by=lm.cy-lm.ry-(lm.id==='starter'?26:50);
+  const bal=me?balloon(wld,me.ci,me.look):null;if(bal)bal.g.style.pointerEvents='none';let bx=lm.cx+(lm.id==='starter'?78:-70),by=lm.cy-lm.ry-(lm.id==='starter'?26:50);
   function enter(m){if(flying)return;flying=true;SFX.pop(1.2);CURW=m.id;const go2=()=>flyTo(all,m.cx,m.cy,()=>go('map'));if(bal){const x0=bx,y0=by;const tx=m.id==='fractions'?m.cx-20:m.cx-m.rx*.85,ty=m.id==='fractions'?m.cy-40:m.cy-30;tween(650,t=>{bx=lerp(x0,tx,t);by=lerp(y0,ty,t)},go2,ease.inOut)}else go2()}
   /* overall progress, for this player */
   const pg=el('g',{},top),PW=360;el('rect',{x:300-PW/2,y:6,width:PW,height:62,rx:16,fill:'#fff4e6',stroke:'#c9a77a','stroke-width':2.5},pg);
-  if(me){const sv=el('svg',{x:300-PW/2+8,y:10,width:54,height:54,viewBox:'-36 -40 72 74'},pg);const c=creature(sv,{x:0,y:0,r:24,i:me.ci,label:''});CREATS.delete(c)}
+  if(me){const sv=el('svg',{x:300-PW/2+8,y:10,width:54,height:54,viewBox:'-36 -40 72 74'},pg);buddy(sv,{r:24,i:me.ci,look:me.look})}
   else{const k=el('g',{transform:`translate(${300-PW/2+35},37)`},pg);el('circle',{r:22,fill:'#2c2356'},k);el('rect',{x:-9,y:-3,width:18,height:15,rx:3,fill:'#ffc04d'},k);el('path',{d:'M-5 -3v-5a5 5 0 0 1 10 0v5',fill:'none',stroke:'#ffc04d','stroke-width':3},k)}
   const tx=300-PW/2+72;el('text',{x:tx,y:30,'font-size':17,'font-weight':700,fill:'#3a2418'},pg).textContent=name;
   const badges=[P.cleared.includes('mirror')&&['Muddler beaten!','#9a6cff'],P.cleared.includes('boss')&&['Gloom beaten!','#ff7eb6'],P.cleared.includes('magpie')&&['Magpie beaten!','#6fe3cd'],P.cleared.includes('kraken')&&['Kraken beaten!','#8fd6ff'],P.cleared.includes('smudge')&&['Smudge beaten!','#ffd23a'],P.cleared.includes('inkblot')&&['Inkblot beaten!','#8ff0c8'],P.cleared.includes('snooze')&&['Snooze woken!','#ff9a3a'],P.cleared.includes('grabbit')&&['Treasure back!','#ffd23a'],P.cleared.includes('fudge')&&['Charts honest!','#e8813a'],P.cleared.includes('eclipse')&&['The moon is full!','#fff1d6']].filter(Boolean);
@@ -8555,7 +8644,7 @@ mount(root){hubDefs(root);
     travel(CX,CY-20,()=>go(C.w))}});
   const here=nodes[front]||{x:CX-80,y:CY+50};
   let bx=here.x+(here.x<CX?-28:28)*NS,by=here.y-88*NS;
-  const bal=me?balloon(balL,me.ci):null;
+  const bal=me?balloon(balL,me.ci,me.look):null;
   function travel(x,y,done){flying=true;SFX.pop(1.2);if(!bal){flyTo(all,x,y,done);return}const x0=bx,y0=by,d=Math.hypot(x-x0,y-60-y0);
     tween(Math.min(1100,350+d*2),t=>{bx=lerp(x0,x,t);by=lerp(y0,y-62,t)-Math.sin(t*Math.PI)*30},()=>flyTo(all,x,y,done),ease.inOut)}
   const dn=WW.isles.filter(w=>P.cleared.includes(w)).length,pw=230,pg=el('g',{},ui);el('rect',{x:CX-pw/2,y:550,width:pw,height:44,rx:12,fill:'#fff4e6',stroke:'#c9a77a','stroke-width':2.5},pg);

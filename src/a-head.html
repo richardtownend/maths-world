@@ -113,6 +113,15 @@ body.inhub .worlds,body.athub #homeBtn{visibility:hidden}
 .pcard{display:flex;flex-direction:column;align-items:center;gap:6px;width:132px;padding:14px 8px 12px;border:0;border-radius:22px;background:var(--glass);cursor:pointer;font-weight:600;font-size:1.05rem;transition:background .2s,transform .2s}
 .pcard:hover,.pcard:focus-visible{background:var(--glass-2);transform:translateY(-3px)}
 .pcard .av{width:96px;height:96px;overflow:visible}
+.pwrap{position:relative}
+.plook{position:absolute;top:-8px;right:-8px;width:44px;height:44px;border-radius:50%;border:0;background:var(--gold);color:var(--sky2);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.plook svg{width:24px;height:24px}
+#lookBig{display:flex;justify-content:center;margin:-6px 0 6px}#lookBig .av{width:150px;height:150px;overflow:visible}
+.looks{display:grid;grid-template-columns:repeat(3,96px);gap:10px;justify-content:center;margin-bottom:14px}
+.looks button{width:96px;height:96px;border-radius:20px;border:3px solid transparent;background:var(--glass);cursor:pointer;padding:4px}
+.looks button[aria-pressed="true"]{border-color:var(--gold);background:var(--glass-2)}
+.looks .av{width:100%;height:100%;overflow:visible}
+.lookcols{justify-content:center;margin-bottom:18px}.lookcols .cdot{width:42px;height:42px}
 .pcard.grown{color:var(--ink-soft);font-size:.92rem}
 .hint{color:var(--ink-soft);margin-top:18px}
 .pindots{display:flex;gap:16px;justify-content:center;margin:0 0 22px}
@@ -258,6 +267,7 @@ body.inhub .worlds,body.athub #homeBtn{visibility:hidden}
 <svg id="dock" viewBox="0 0 230 70" aria-label="Round controls"></svg>
 </div>
 <div class="scr" id="whoScr" hidden role="dialog" aria-labelledby="whoT"><div class="scr-in"><h2 id="whoT">Who’s playing?</h2><div class="cards" id="whoCards"></div><p class="hint" id="whoHint"></p></div></div>
+<div class="scr" id="lookScr" hidden role="dialog" aria-labelledby="lookT"><div class="scr-in"><h2 id="lookT">Pick your creature</h2><div id="lookBig"></div><div class="looks" id="lookList" role="group" aria-label="Creature"></div><div class="cols lookcols" id="lookCols" role="group" aria-label="Colour"></div><button class="chip gold" id="lookOk">Done</button></div></div>
 <div class="scr" id="pinScr" hidden role="dialog" aria-labelledby="pinT"><div class="scr-in"><h2 id="pinT">Grown-up PIN</h2><div class="pindots" id="pinDots"><i></i><i></i><i></i><i></i></div><div class="pad" id="pinPad"></div></div></div>
 <div class="scr dim" id="clearCard" hidden role="dialog" aria-labelledby="ccT"><div class="ccard"><div id="ccIcon"></div><h2 id="ccT"></h2><p id="ccP"></p><div class="crow"><button class="chip" id="ccStay">Stay here</button><button class="chip gold" id="ccNext"></button></div></div></div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-labelledby="sheetT"><div class="in"><button class="tool x" id="sheetX" aria-label="Close"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M7 7l12 12M19 7 7 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><div id="sheetBody"></div></div></div>

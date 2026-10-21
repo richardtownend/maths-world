@@ -143,9 +143,9 @@ function bridge(parent,a,b,lit,s=1){const x0=a.x+(b.x-a.x)*.3,y0=a.y+(b.y-a.y)*.
   for(let k=1;k<6;k++){const t=k/6,px=(1-t)*(1-t)*x0+2*(1-t)*t*mx+t*t*x1,py=(1-t)*(1-t)*y0+2*(1-t)*t*my+t*t*y1;el('path',{d:`M${px.toFixed(1)},${py.toFixed(1)} v${(-6*s).toFixed(1)}`,stroke:lit?'#c9a24a':'rgba(201,184,238,.3)','stroke-width':2*s},g)}
   if(lit)el('path',{d:`M${x0},${y0} Q${mx},${my} ${x1},${y1}`,fill:'none',stroke:'#fff0a0','stroke-width':4*s,opacity:.18,filter:'url(#glow)'},g);return g}
 /* the player's hot-air balloon, in their creature's colour */
-function balloon(parent,ci){const g=el('g',{},parent),inner=el('g',{},g),col=CCOL[ci%CCOL.length];
+function balloon(parent,ci,look){const g=el('g',{},parent),inner=el('g',{},g),col=CCOL[ci%CCOL.length];
   el('path',{d:'M-6,-4 L-8,9 M6,-4 L8,9',stroke:'#c9a77a','stroke-width':1.2},inner);
-  const cr=creature(inner,{x:0,y:6,r:8,i:ci,label:'',shadow:false});CREATS.delete(cr);
+  const cr=buddy(inner,{x:0,y:5,r:9,i:ci,look,shadow:false});
   el('path',{d:'M-10,8 h20 l-2,10 h-16Z',fill:'#a8743a',stroke:'#6a4420','stroke-width':1},inner);el('path',{d:'M-9,12 h18',stroke:'#6a4420','stroke-width':.8},inner);
   el('path',{d:'M0,-62 C24,-62 32,-42 28,-28 C24,-15 11,-9 6,-4 L-6,-4 C-11,-9 -24,-15 -28,-28 C-32,-42 -24,-62 0,-62Z',fill:col},inner);
   el('path',{d:'M0,-62 C9,-54 10,-16 4,-4 L-4,-4 C-10,-16 -9,-54 0,-62Z',fill:'#fff4e6',opacity:.6},inner);

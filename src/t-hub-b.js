@@ -106,11 +106,11 @@ mount(root){hubDefs(root);
     flying=true;SFX.pop(1.2);CURW='eclipse';flyTo(all,300,300,()=>go('eclipse'))}});
   /* the player's balloon floats by the world they last played */
   const lastW=me&&ST.last[PL]?worldOf(ST.last[PL]).id:'starter',lm=lastW==='eclipse'?{id:'eclipse',cx:450,cy:380,rx:20,ry:20}:models.find(m=>m.id===lastW)||models[0];
-  const bal=me?balloon(wld,me.ci):null;if(bal)bal.g.style.pointerEvents='none';let bx=lm.cx+(lm.id==='starter'?78:-70),by=lm.cy-lm.ry-(lm.id==='starter'?26:50);
+  const bal=me?balloon(wld,me.ci,me.look):null;if(bal)bal.g.style.pointerEvents='none';let bx=lm.cx+(lm.id==='starter'?78:-70),by=lm.cy-lm.ry-(lm.id==='starter'?26:50);
   function enter(m){if(flying)return;flying=true;SFX.pop(1.2);CURW=m.id;const go2=()=>flyTo(all,m.cx,m.cy,()=>go('map'));if(bal){const x0=bx,y0=by;const tx=m.id==='fractions'?m.cx-20:m.cx-m.rx*.85,ty=m.id==='fractions'?m.cy-40:m.cy-30;tween(650,t=>{bx=lerp(x0,tx,t);by=lerp(y0,ty,t)},go2,ease.inOut)}else go2()}
   /* overall progress, for this player */
   const pg=el('g',{},top),PW=360;el('rect',{x:300-PW/2,y:6,width:PW,height:62,rx:16,fill:'#fff4e6',stroke:'#c9a77a','stroke-width':2.5},pg);
-  if(me){const sv=el('svg',{x:300-PW/2+8,y:10,width:54,height:54,viewBox:'-36 -40 72 74'},pg);const c=creature(sv,{x:0,y:0,r:24,i:me.ci,label:''});CREATS.delete(c)}
+  if(me){const sv=el('svg',{x:300-PW/2+8,y:10,width:54,height:54,viewBox:'-36 -40 72 74'},pg);buddy(sv,{r:24,i:me.ci,look:me.look})}
   else{const k=el('g',{transform:`translate(${300-PW/2+35},37)`},pg);el('circle',{r:22,fill:'#2c2356'},k);el('rect',{x:-9,y:-3,width:18,height:15,rx:3,fill:'#ffc04d'},k);el('path',{d:'M-5 -3v-5a5 5 0 0 1 10 0v5',fill:'none',stroke:'#ffc04d','stroke-width':3},k)}
   const tx=300-PW/2+72;el('text',{x:tx,y:30,'font-size':17,'font-weight':700,fill:'#3a2418'},pg).textContent=name;
   const badges=[P.cleared.includes('mirror')&&['Muddler beaten!','#9a6cff'],P.cleared.includes('boss')&&['Gloom beaten!','#ff7eb6'],P.cleared.includes('magpie')&&['Magpie beaten!','#6fe3cd'],P.cleared.includes('kraken')&&['Kraken beaten!','#8fd6ff'],P.cleared.includes('smudge')&&['Smudge beaten!','#ffd23a'],P.cleared.includes('inkblot')&&['Inkblot beaten!','#8ff0c8'],P.cleared.includes('snooze')&&['Snooze woken!','#ff9a3a'],P.cleared.includes('grabbit')&&['Treasure back!','#ffd23a'],P.cleared.includes('fudge')&&['Charts honest!','#e8813a'],P.cleared.includes('eclipse')&&['The moon is full!','#fff1d6']].filter(Boolean);
@@ -161,7 +161,7 @@ mount(root){hubDefs(root);
     travel(CX,CY-20,()=>go(C.w))}});
   const here=nodes[front]||{x:CX-80,y:CY+50};
   let bx=here.x+(here.x<CX?-28:28)*NS,by=here.y-88*NS;
-  const bal=me?balloon(balL,me.ci):null;
+  const bal=me?balloon(balL,me.ci,me.look):null;
   function travel(x,y,done){flying=true;SFX.pop(1.2);if(!bal){flyTo(all,x,y,done);return}const x0=bx,y0=by,d=Math.hypot(x-x0,y-60-y0);
     tween(Math.min(1100,350+d*2),t=>{bx=lerp(x0,x,t);by=lerp(y0,y-62,t)-Math.sin(t*Math.PI)*30},()=>flyTo(all,x,y,done),ease.inOut)}
   const dn=WW.isles.filter(w=>P.cleared.includes(w)).length,pw=230,pg=el('g',{},ui);el('rect',{x:CX-pw/2,y:550,width:pw,height:44,rx:12,fill:'#fff4e6',stroke:'#c9a77a','stroke-width':2.5},pg);

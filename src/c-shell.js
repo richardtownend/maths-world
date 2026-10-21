@@ -183,14 +183,71 @@ function clearCard(w){const WW=worldOf(w),L=WW.isles,i=L.indexOf(w),nx=L[i+1],c=
   $('#ccStay').onclick=()=>{c.hidden=true};c.hidden=false;$('#ccNext').focus()}
 
 /* ---------- who's playing ---------- */
-function avatar(host,ci,r=24){const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','-36 -40 72 74');sv.setAttribute('aria-hidden','true');sv.classList.add('av');host.appendChild(sv);const c=creature(sv,{x:0,y:0,r,i:ci,label:'',shadow:true});CREATS.delete(c);return sv}
+/* a player's own creature: the classic blob, or a monster or alien of their choosing, in their colour */
+const LOOKS=[['blob','Blob'],['alien','Alien'],['horns','Horned monster'],['cyclops','One-eyed monster'],['squid','Squid alien'],['fuzzy','Fuzzball']];
+function buddy(parent,{x=0,y=0,r=24,i=0,look='blob',shadow=true}={}){
+  if(!look||look==='blob'){const c=creature(parent,{x,y,r,i,label:'',shadow});CREATS.delete(c);return c}
+  const col=CCOL[i%CCOL.length],dk=darker(col),ink='#241a3a',ivory='#fff4e6',f=n=>(n*r).toFixed(2);
+  const g=el('g',{transform:`translate(${x},${y})`},parent);
+  if(shadow)el('ellipse',{cx:0,cy:f(1.02),rx:f(.85),ry:f(.18),fill:'#0d0a24',opacity:.35},g);
+  const b=el('g',look==='squid'?{transform:`translate(0,${f(-.08)}) scale(1.18)`}:{},g);
+  const feet=()=>[-1,1].forEach(s=>el('ellipse',{cx:f(s*.36),cy:f(.92),rx:f(.24),ry:f(.13),fill:dk},b));
+  const eye=(ex,ey,er,dx=0)=>{el('circle',{cx:f(ex),cy:f(ey),r:f(er),fill:'#fffaf2'},b);el('circle',{cx:f(ex+dx),cy:f(ey+er*.1),r:f(er*.52),fill:ink},b);el('circle',{cx:f(ex+dx-er*.18),cy:f(ey-er*.12),r:f(er*.17),fill:'#fff'},b)};
+  const shine=()=>el('ellipse',{cx:f(-.34),cy:f(-.45),rx:f(.24),ry:f(.13),fill:'#fff',opacity:.28,transform:`rotate(-20 ${f(-.34)} ${f(-.45)})`},b);
+  const cheeks=(cy=.2)=>[-1,1].forEach(s=>el('ellipse',{cx:f(s*.55),cy:f(cy),rx:f(.12),ry:f(.07),fill:'#ff6f91',opacity:.35},b));
+  if(look==='alien'){
+    [-1,1].forEach(s=>{el('path',{d:`M${f(s*.28)},${f(-.72)} Q${f(s*.4)},${f(-1.2)} ${f(s*.66)},${f(-1.3)}`,stroke:dk,'stroke-width':f(.09),fill:'none','stroke-linecap':'round'},b);el('circle',{cx:f(s*.66),cy:f(-1.3),r:f(.15),fill:'#e6ff8a'},b)});
+    feet();el('path',{d:`M0,${f(-.95)} C${f(1.12)},${f(-.95)} ${f(1.0)},${f(.3)} ${f(.42)},${f(.86)} Q0,${f(1.02)} ${f(-.42)},${f(.86)} C${f(-1.0)},${f(.3)} ${f(-1.12)},${f(-.95)} 0,${f(-.95)}Z`,fill:col},b);shine();
+    [-1,1].forEach(s=>{el('ellipse',{cx:f(s*.34),cy:f(-.18),rx:f(.27),ry:f(.17),fill:ink,transform:`rotate(${s*28} ${f(s*.34)} ${f(-.18)})`},b);el('circle',{cx:f(s*.34-.08),cy:f(-.24),r:f(.06),fill:'#fff'},b)});
+    el('path',{d:`M${f(-.13)},${f(.36)} q${f(.13)},${f(.11)} ${f(.26)},0`,stroke:ink,'stroke-width':Math.max(1.2,r*.08),fill:'none','stroke-linecap':'round'},b)}
+  else if(look==='horns'){
+    [-1,1].forEach(s=>el('path',{d:`M${f(s*.32)},${f(-.78)} Q${f(s*.95)},${f(-.95)} ${f(s*.86)},${f(-1.42)} Q${f(s*.62)},${f(-1.02)} ${f(s*.12)},${f(-.9)}Z`,fill:ivory,stroke:'#d9c8b0','stroke-width':f(.04)},b));
+    feet();el('path',{d:blobPath(r,1.06,.98,2.2),fill:col},b);shine();
+    el('ellipse',{cx:0,cy:f(.42),rx:f(.48),ry:f(.34),fill:'#fff',opacity:.16},b);
+    eye(-.3,-.2,.22,.03);eye(.3,-.2,.22,-.03);
+    [-1,1].forEach(s=>el('path',{d:`M${f(s*.52)},${f(-.5)} L${f(s*.12)},${f(-.4)}`,stroke:dk,'stroke-width':f(.1),'stroke-linecap':'round'},b));
+    el('path',{d:`M${f(-.46)},${f(.14)} Q0,${f(.66)} ${f(.46)},${f(.14)}Z`,fill:ink},b);
+    [-1,1].forEach(s=>el('path',{d:`M${f(s*.36)},${f(.17)} l${f(-s*.08)},${f(.18)} l${f(-s*.09)},${f(-.16)}Z`,fill:'#fff'},b))}
+  else if(look==='cyclops'){
+    el('path',{d:`M${f(-.14)},${f(-1.0)} L0,${f(-1.42)} L${f(.14)},${f(-1.0)}Z`,fill:ivory,stroke:'#d9c8b0','stroke-width':f(.04)},b);
+    feet();el('path',{d:blobPath(r,.96,1.1,4.1),fill:col},b);shine();cheeks(.25);
+    el('circle',{cx:0,cy:f(-.22),r:f(.44),fill:'#fffaf2'},b);el('circle',{cx:0,cy:f(-.18),r:f(.26),fill:dk},b);el('circle',{cx:0,cy:f(-.18),r:f(.15),fill:ink},b);el('circle',{cx:f(-.08),cy:f(-.27),r:f(.07),fill:'#fff'},b);
+    el('path',{d:`M${f(-.36)},${f(.36)} Q0,${f(.72)} ${f(.36)},${f(.36)}Z`,fill:ink},b);
+    el('path',{d:`M${f(-.3)},${f(.38)} l${f(.1)},${f(.12)} l${f(.1)},${f(-.1)} l${f(.1)},${f(.12)} l${f(.1)},${f(-.1)} l${f(.1)},${f(.12)} l${f(.1)},${f(-.12)}Z`,fill:'#fff'},b)}
+  else if(look==='squid'){
+    [-.62,-.31,0,.31,.62].forEach((o,k)=>el('path',{d:`M${f(o)},${f(.2)} q${f(.14*(k%2?1:-1))},${f(.35)} ${f(0)},${f(.55)} t${f(o*.25)},${f(.25)}`,stroke:dk,'stroke-width':f(.2),fill:'none','stroke-linecap':'round'},b));
+    el('path',{d:`M${f(-.92)},${f(.35)} C${f(-.98)},${f(-1.15)} ${f(.98)},${f(-1.15)} ${f(.92)},${f(.35)} Q0,${f(.55)} ${f(-.92)},${f(.35)}Z`,fill:col},b);shine();
+    [[-.5,-.52,.1],[.42,-.62,.08],[.6,-.2,.07]].forEach(([cx,cy,rr])=>el('circle',{cx:f(cx),cy:f(cy),r:f(rr),fill:'#fff',opacity:.22},b));
+    eye(-.28,-.12,.2);eye(.28,-.12,.2);eye(0,-.48,.15);
+    el('ellipse',{cx:0,cy:f(.24),rx:f(.08),ry:f(.09),fill:ink},b)}
+  else if(look==='fuzzy'){
+    feet();let d='';const n=22;for(let k=0;k<=n;k++){const a=k/n*Math.PI*2-Math.PI/2,rr=k%2?.82:1.0,px=Math.cos(a)*rr,py=Math.sin(a)*rr*.95;d+=(k?' L':'M')+f(px)+','+f(py)}
+    el('path',{d:d+'Z',fill:col,'stroke-linejoin':'round',stroke:col,'stroke-width':f(.08)},b);
+    el('circle',{r:f(.72),fill:'#fff',opacity:.1},b);
+    eye(-.28,-.16,.24,.04);eye(.28,-.16,.24,-.04);cheeks(.22);
+    el('path',{d:`M${f(-.2)},${f(.3)} q${f(.2)},${f(.18)} ${f(.4)},0`,stroke:ink,'stroke-width':Math.max(1.2,r*.08),fill:'none','stroke-linecap':'round'},b);
+    el('rect',{x:f(-.06),y:f(.36),width:f(.12),height:f(.12),rx:f(.02),fill:'#fff'},b)}
+  return{g}}
+function avatar(host,ci,r=24,look){const sv=document.createElementNS(NS,'svg');sv.setAttribute('viewBox','-36 -40 72 74');sv.setAttribute('aria-hidden','true');sv.classList.add('av');host.appendChild(sv);buddy(sv,{r,i:ci,look});return sv}
 function showWho(){const scr=$('#whoScr'),box=$('#whoCards');box.innerHTML='';$('#sheet').hidden=true;
-  ST.players.forEach(p=>{const b=document.createElement('button');b.className='pcard';b.dataset.pl=p.id;avatar(b,p.ci);const n=document.createElement('span');n.textContent=p.name;b.appendChild(n);
-    b.addEventListener('click',()=>{unlockAudio();SFX.pop(1.2);PL=p.id;scr.hidden=true;start()});box.appendChild(b)});
+  ST.players.forEach(p=>{const w=document.createElement('div');w.className='pwrap';const b=document.createElement('button');b.className='pcard';b.dataset.pl=p.id;avatar(b,p.ci,24,p.look);const n=document.createElement('span');n.textContent=p.name;b.appendChild(n);
+    b.addEventListener('click',()=>{unlockAudio();SFX.pop(1.2);PL=p.id;scr.hidden=true;start()});w.appendChild(b);
+    const lk=document.createElement('button');lk.className='plook';lk.setAttribute('aria-label',`Change ${p.name}’s creature`);
+    lk.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5L9 20H4v-5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12.5 6.5l5 5" stroke="currentColor" stroke-width="2.2"/></svg>';
+    lk.addEventListener('click',()=>{unlockAudio();SFX.pop(1.4);showLook(p.id)});w.appendChild(lk);box.appendChild(w)});
   const g=document.createElement('button');g.className='pcard grown';g.dataset.pl='g';g.innerHTML=`<svg class="av" viewBox="-36 -40 72 74" aria-hidden="true"><circle r="27" fill="#2c2356" stroke="rgba(255,240,160,.5)" stroke-width="2"/><rect x="-11" y="-3" width="22" height="18" rx="4" fill="#ffc04d"/><path d="M-6 -3v-6a6 6 0 0 1 12 0v6" fill="none" stroke="#ffc04d" stroke-width="3.5"/><circle cy="5" r="2.6" fill="#3a2418"/></svg><span>${ST.pin?'Grown-up':'Set up'}</span>`;
   g.addEventListener('click',()=>{unlockAudio();SFX.pop(.9);askPin(ST.pin?'enter':'new1')});box.appendChild(g);
   $('#whoHint').textContent=ST.players.length?'':'First time here? A grown-up sets a PIN, then adds the players.';
   scr.hidden=false;const f=box.querySelector('.pcard');if(f)f.focus()}
+/* the creature picker: any player can choose their own look and colour */
+function showLook(id){const p=ST.players.find(x=>x.id===id);if(!p)return;const scr=$('#lookScr');$('#lookT').textContent=`Pick your creature, ${p.name}`;
+  const draw=()=>{const big=$('#lookBig');big.innerHTML='';avatar(big,p.ci,24,p.look);
+    const L=$('#lookList');L.innerHTML='';LOOKS.forEach(([k,nm])=>{const b=document.createElement('button');b.setAttribute('aria-label',nm);b.setAttribute('aria-pressed',(p.look||'blob')===k);avatar(b,p.ci,24,k);
+      b.addEventListener('click',()=>{p.look=k;save();SFX.pop(1+LOOKS.findIndex(x=>x[0]===k)*.08);draw()});L.appendChild(b)});
+    const C=$('#lookCols');C.innerHTML='';PCOL.forEach((ci,k)=>{const b=document.createElement('button');b.className='cdot';b.style.background=CCOL[ci];b.setAttribute('aria-label',`Colour ${k+1}`);b.setAttribute('aria-pressed',p.ci===ci);
+      b.addEventListener('click',()=>{p.ci=ci;save();SFX.tick(k);draw()});C.appendChild(b)})};
+  draw();scr.hidden=false;$('#lookOk').focus()}
+$('#lookOk').addEventListener('click',()=>{SFX.chime();$('#lookScr').hidden=true;showWho()});
 function start(){save();document.body.classList.toggle('goggles',GOG);jarIcon();go('hub')}
 
 /* ---------- the grown-up PIN (a latch for little fingers, not real security) ---------- */

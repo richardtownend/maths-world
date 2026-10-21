@@ -35,18 +35,26 @@ document.addEventListener('visibilitychange',()=>{if(!AC)return;try{if(document.
 addEventListener('pagehide',()=>{try{if(AC){ambStop();AC.suspend()}}catch(e){}});
 function outTo(node,wet){node.connect(MASTER);if(wet&&ECHO){const g=AC.createGain();g.gain.value=wet;node.connect(g);g.connect(ECHO)}}
 function env(g,t,a,peak,d){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+a);g.gain.exponentialRampToValueAtTime(.0001,t+a+d)}
+/* while the background is playing its little sounds, anything low or long (rumbles, waves, hums) is dropped: no drones */
+let AMB_GATE=false;
 function osc(type,f,dur,vol,{to,wet=.25,a=.006,at=0,det=0,lfo=0,lfoDepth=0,lp=0}={}){
-  if(!live())return;try{const t=AC.currentTime+at,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+dur);o.detune.value=det;
+  if(!live()||(AMB_GATE&&(f<300||dur>1)))return;try{const t=AC.currentTime+at,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+dur);o.detune.value=det;
     let n=o;if(lp){const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=lp;o.connect(fl);n=fl}
     if(lfo){const l=AC.createOscillator(),lg=AC.createGain();l.frequency.value=lfo;lg.gain.value=lfoDepth;l.connect(lg);lg.connect(g.gain);l.start(t);l.stop(t+a+dur+.05)}
     env(g,t,a,vol,dur);n.connect(g);outTo(g,wet);o.start(t);o.stop(t+a+dur+.05)}catch(e){}}
 function noise(dur,vol,{type='bandpass',f=1200,q=1,to,wet=.1,a=.003,at=0}={}){
-  if(!live())return;try{const t=AC.currentTime+at,s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=NOISE;fl.type=type;fl.frequency.setValueAtTime(f,t);if(to)fl.frequency.exponentialRampToValueAtTime(to,t+dur);fl.Q.value=q;
+  if(!live()||(AMB_GATE&&(type==='lowpass'||f<900||dur>1)))return;try{const t=AC.currentTime+at,s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=NOISE;fl.type=type;fl.frequency.setValueAtTime(f,t);if(to)fl.frequency.exponentialRampToValueAtTime(to,t+dur);fl.Q.value=q;
     env(g,t,a,vol,dur);s.connect(fl);fl.connect(g);outTo(g,wet);s.start(t,Math.random()*.5);s.stop(t+a+dur+.05)}catch(e){}}
 function bell(f,vol=.1,dur=.9,{at=0,wet=.4,ratio=3.5}={}){
-  if(!live())return;try{const t=AC.currentTime+at,c=AC.createOscillator(),m=AC.createOscillator(),mg=AC.createGain(),g=AC.createGain();
+  if(!live()||(AMB_GATE&&f<300))return;try{const t=AC.currentTime+at,c=AC.createOscillator(),m=AC.createOscillator(),mg=AC.createGain(),g=AC.createGain();
     c.frequency.value=f;m.frequency.value=f*ratio;mg.gain.setValueAtTime(f*1.8,t);mg.gain.exponentialRampToValueAtTime(f*.02,t+dur);m.connect(mg);mg.connect(c.frequency);
     env(g,t,.004,vol,dur);c.connect(g);outTo(g,wet);c.start(t);m.start(t);c.stop(t+dur+.1);m.stop(t+dur+.1)}catch(e){}}
+/* a soft piano note: a few sine partials, a quick strike and a long fade, mellowing as it dies away */
+function piano(f,vol=.02,{at=0,dur=2.6,wet=.55}={}){
+  if(!live())return;try{const t=AC.currentTime+at,g=AC.createGain(),lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(6000,f*7),t);lp.frequency.exponentialRampToValueAtTime(Math.max(400,f*1.6),t+dur);lp.connect(g);g.gain.value=vol;
+    [[1,1,1],[2,.42,.6],[3,.16,.38],[4,.07,.25]].forEach(([h,a,dk])=>{const o=AC.createOscillator(),og=AC.createGain();o.type='sine';o.frequency.value=f*h*(1+.0004*h*h);
+      og.gain.setValueAtTime(.0001,t);og.gain.exponentialRampToValueAtTime(a,t+.005);og.gain.exponentialRampToValueAtTime(.0001,t+dur*dk);o.connect(og);og.connect(lp);o.start(t);o.stop(t+dur+.1)});
+    outTo(g,wet)}catch(e){}}
 /* the older call shape, now through the magic chain */
 function tone(f,d=.14,type='sine',vol=.1,to){osc(type==='square'||type==='sawtooth'?'triangle':type,f,d,vol*.9,{to,wet:.22})}
 const sizeHz=s=>196/Math.sqrt(s);
@@ -96,11 +104,25 @@ function ambStop(){clearTimeout(AMB.timer);AMB.timer=null;clearTimeout(AMB.swell
 function ambient(kind){
   AMB.kind=kind;if(!live())return;ambStop();AMB.on=kind;
   const PAD={hills:[110,164.8],scales:[110,164.8],oven:[98,146.8],shop:[130.8,196],glass:[123.5,185],cave:[92.5,138.6],river:[103.8,155.6],gorge:[87.3,130.8],meadow:[116.5,174.6],patch:[103.8,155.6],desk:[98,146.8],picnic:[110,164.8],tower:[92.5,138.6],festival:[116.5,174.6],lair:[73.4,110],hub:[130.8,196],sea:[98,146.8],door:[98,146.8],lagoon:[110,164.8],chart:[98,146.8],whirl:[73.4,110],beach:[110,164.8],lamp:[87.3,130.8]}[kind]||[110,164.8];
-  /* no continuous drone: every so often a soft, high chord breathes in and fades away, with silence between */
-  const swell=()=>{if(AMB.kind!==kind||!live())return;const [f1,f2]=PAD,up=Math.random()<.5?2:1.5;
-    osc('sine',f1*2,5.5,.0045,{a:2.6,wet:.7});osc('sine',f2*up,5,.0035,{a:3,at:.4,wet:.7});
-    AMB.swell=setTimeout(swell,11000+Math.random()*9000)};
-  AMB.swell=setTimeout(swell,2500);
+  /* the music: short, gentle piano phrases on the same five notes as the game's chimes, with rests between.
+     Darker places lean on A (minor feel), the rest on C. Each phrase picks a shape: a wander, a climb, a fall, a chord, an echo or a pair */
+  const dark=['lair','cave','gorge','tower','whirl','grey','inky','night','lamp'].includes(kind),home=dark?-1:0;
+  const pz=d=>523.25*Math.pow(2,(PENTA[((d%5)+5)%5]+12*Math.floor(d/5))/12);
+  let pos=home+1+Math.floor(Math.random()*3),last='';
+  const phrase=()=>{if(AMB.kind!==kind||!live())return;
+    const v=.85+Math.random()*.3,step=[.34,.42,.5,.6][Math.floor(Math.random()*4)],notes=[];let t=0;
+    const add=(d,dt=step,len=2.4,vol=1)=>{d=Math.max(-5,Math.min(7,d));notes.push([d,t,len,vol]);t+=dt;pos=d};
+    let shapes=['wander','climb','fall','chord','echo','pair'].filter(x=>x!==last);const sh=shapes[Math.floor(Math.random()*shapes.length)];last=sh;
+    if(Math.random()<.45)piano((dark?110:130.8)*(Math.random()<.5?1:1.5),.016*v,{dur:4.5,wet:.6});
+    if(sh==='wander'){const n=3+Math.floor(Math.random()*4);for(let k=0;k<n;k++){const drift=pos>home+4?-1:pos<home-2?1:0;add(pos+([-2,-1,-1,1,1,2][Math.floor(Math.random()*6)]+drift)*(k?1:0),step*(Math.random()<.25?2:1))}}
+    else if(sh==='climb'){const s0=pos>home+2?pos-3:pos;for(let k=0;k<4;k++)add(s0+k)}
+    else if(sh==='fall'){const s0=pos<home+1?pos+3:pos;for(let k=0;k<4;k++)add(s0-k)}
+    else if(sh==='chord'){const b=Math.min(pos,home+3);[0,2,4].forEach((o,k)=>add(b+o,.06,3.2,k?.8:1));t+=step}
+    else if(sh==='echo'){const m=[pos,pos+1,pos-1],oc=pos>home+1?-5:5;m.forEach(d=>add(d));t+=step;m.forEach(d=>add(d+oc,step,2,.55))}
+    else{add(pos,step*1.5);add(pos+(Math.random()<.5?2:-2),step,3)}
+    notes.forEach(([d,at,len,vol],k)=>piano(pz(d),.02*v*vol,{at,dur:k===notes.length-1?len+1:len}));
+    AMB.swell=setTimeout(phrase,(t+5+Math.random()*7)*1000)};
+  AMB.swell=setTimeout(phrase,1500);
   const ev={
     hills:()=>{if(Math.random()<.6)for(let k=0;k<3;k++)osc('sine',4300+Math.random()*300,.03,.006,{at:k*.07,wet:.3});else bell(noteHz(5+Math.floor(Math.random()*8)),.012,1.6,{wet:.8})},
     oven:()=>{const n=2+Math.floor(Math.random()*5);for(let k=0;k<n;k++)noise(.02,.03+Math.random()*.04,{f:1500+Math.random()*2500,q:2,at:k*(.05+Math.random()*.15),wet:0});if(Math.random()<.15)noise(.6,.02,{type:'lowpass',f:300,a:.2,wet:0})},
@@ -118,7 +140,7 @@ function ambient(kind){
     gorge:()=>{const r=Math.random();if(r<.45)noise(2.4,.035,{f:400,to:900,q:.6,a:.9,wet:.4});else if(r<.75){const f=1800+Math.random()*900;osc('sine',f,.12,.012,{to:f*1.3,wet:.6});osc('sine',f*1.1,.1,.01,{to:f*.9,at:.18,wet:.6})}else osc('triangle',140+Math.random()*40,.3,.02,{to:110,lp:500,wet:.3})},
     cave:()=>{if(Math.random()<.6)osc('sine',900+Math.random()*900,.12,.03,{to:350,wet:.85});else bell(noteHz(8+Math.floor(Math.random()*6)),.012,2,{wet:.9,ratio:6.1})}
   }[kind]||AMB_X[kind]||(()=>{});
-  const tick=()=>{if(AMB.kind!==kind||!live())return;ev();AMB.timer=setTimeout(tick,(kind==='oven'?700:1600)+Math.random()*(kind==='oven'?1500:3200))};
+  const tick=()=>{if(AMB.kind!==kind||!live())return;AMB_GATE=true;try{ev()}finally{AMB_GATE=false}AMB.timer=setTimeout(tick,(kind==='oven'?700:1600)+Math.random()*(kind==='oven'?1500:3200))};
   AMB.timer=setTimeout(tick,1200);
 }
 function chime(){SFX.chime()}
