@@ -1,11 +1,11 @@
 /* ================= The Eclipse: the final boss, in the middle of the sky =================
-   The moon has been going dark all along. The Eclipse, a shadow that eats moonlight, sent all nine villains.
-   Each world boss beaten pushes the shadow back a little; with all nine, the Eclipse can be faced.
-   Its six puzzles each mix two worlds, using moves the child already knows from the islands. */
+   The moon has been going dark all along. The Eclipse, a shadow that eats moonlight, sent all the world villains.
+   Each world boss beaten pushes the shadow back a little; with all ten, the Eclipse can be faced.
+   Its seven puzzles each mix two worlds, using moves the child already knows from the islands. */
 const bossesBeaten=()=>{try{return BOSSES.filter(b=>isCleared(b)).length}catch(e){return 0}};
 /* the shadow over the sky's moon on every night backdrop: a ninth slides off for each boss beaten */
 function moonShadow(parent,cx,cy,r){let won=false;try{won=isCleared('eclipse')}catch(e){}if(won)return;
-  const lit=bossesBeaten()/9*.7,id='mShadowClip',cp=el('clipPath',{id},parent);el('circle',{cx,cy,r},cp);
+  const lit=bossesBeaten()/BOSSES.length*.7,id='mShadowClip',cp=el('clipPath',{id},parent);el('circle',{cx,cy,r},cp);
   el('circle',{cx:cx-r*2.1*lit,cy:cy-2,r:r*1.02,fill:'#2a2048','clip-path':`url(#${id})`,opacity:.92},parent)}
 /* the moon with the Eclipse's shadow across it: cover 1 = all dark, 0 = the shadow has slid off */
 function eclipseFig(parent,{s=1}={}){const g=el('g',{},parent),b=el('g',{transform:`scale(${s})`},g),R=50;
@@ -20,19 +20,20 @@ function eclipseFig(parent,{s=1}={}){const g=el('g',{},parent),b=el('g',{transfo
     mood(m){mouth.setAttribute('d',m==='sad'?'M-18,20 Q0,8 18,20':m==='oh'?'M-6,16 a6,6 0 1 0 0.1,0':'M-18,14 Q0,26 18,14')},
     tick(t){T=t;eyes.forEach((e,i)=>e.setAttribute('ry',(Math.sin(t*1.7+i)>.96?1:7).toString()));b.setAttribute('transform',`scale(${s}) rotate(${(Math.sin(t*.4)*2).toFixed(2)})`)}}}
 /* the middle of the sky on the home screen */
-function eclipseCentreFig(parent,{won=false}={}){const e=eclipseFig(parent,{s:1});e.setCover(won?0:1-bossesBeaten()/9*.7);return{g:e.g,tick:t=>e.tick(t)}}
+function eclipseCentreFig(parent,{won=false}={}){const e=eclipseFig(parent,{s:1});e.setCover(won?0:1-bossesBeaten()/BOSSES.length*.7);return{g:e.g,tick:t=>e.tick(t)}}
 
 /* shared bits for the pages */
 function brushRow(parent,x,y,items,get,set){const g=el('g',{},parent);const draw=()=>{g.innerHTML='';items.forEach((it,i)=>{const b=el('g',{transform:`translate(${x+i*64},${y})`},g),on=get()===it.k;
     el('rect',{x:-28,y:-22,width:56,height:44,rx:12,fill:on?'#fff4c0':'#fffaf0',stroke:on?'#9a6cff':'#c9a77a','stroke-width':on?4:2},b);it.draw(b);interact(b,{label:`Brush: ${it.name}`,tap:()=>{set(it.k);SFX.tick(i+2);draw()}})})};draw();return{redraw:draw}}
 
 W.eclipse={scene:'night',
-notes:`<p>The final boss, in the middle of the sky. The moon has been going dark all along: the Eclipse, a shadow that eats moonlight, sent all nine villains. Each world boss beaten pushes the shadow back a little, and once all nine are beaten the Eclipse can be faced (grown-up mode opens it any time).</p>
-<p>Six puzzles, each mixing two worlds and each done with a move from the islands: share Polly's loot between 4 pirates (a quarter is one share); paint a pie chart from Pip's tally (half the slices for half the animals); tile a rug 2 red for every 3 blue; the Eclipse turns the minute hand three-quarters of a turn (wind the clock on); buy 3 lollies at £0.45 with the right coins; and the shadow shrinking 20% of the moon every hour (drag the flag to when it's gone). Each right answer slides the shadow further off the moon. Three stars: a wrong answer loses one and the next try is different; lose all three and the shadow creeps back a step.</p>`,
+notes:`<p>The final boss, in the middle of the sky. The moon has been going dark all along: the Eclipse, a shadow that eats moonlight, sent all the world villains. Each world boss beaten pushes the shadow back a little, and once all ten are beaten the Eclipse can be faced (grown-up mode opens it any time).</p>
+<p>Seven puzzles, each mixing two worlds and each done with a move from the islands: share Polly's loot between 4 pirates (a quarter is one share); paint a pie chart from Pip's tally (half the slices for half the animals); tile a rug 2 red for every 3 blue; the Eclipse turns the minute hand three-quarters of a turn (wind the clock on); buy 3 lollies at £0.45 with the right coins; wind a tower clock that only has Roman numerals to half past IX; and the shadow shrinking 20% of the moon every hour (drag the flag to when it's gone). Each right answer slides the shadow further off the moon. Three stars: a wrong answer loses one and the next try is different; lose all three and the shadow creeps back a step.</p>`,
 mount(root){
   const Q=[{t:'loot',v:[{A:72},{A:96},{A:56}]},{t:'pie',v:[{n:8,c:{sheep:4,goat:2,duck:2}},{n:6,per:2,c:{sheep:6,goat:4,duck:2}},{n:12,c:{sheep:6,goat:4,duck:2}}]},
     {t:'tiles',v:[{cols:5,rows:4,a:2,b:3},{cols:4,rows:4,a:3,b:1},{cols:6,rows:3,a:1,b:2}]},{t:'turn',v:[{t0:195,f:[3,4]},{t0:150,f:[1,2]},{t0:255,f:[5,4]}]},
     {t:'shop',v:[{n:3,p:45,purse:[100,50,50,20,20,10,10,5,5,2]},{n:4,p:35,purse:[100,50,20,20,10,5,5,2,1]},{n:3,p:25,purse:[50,50,20,10,5,5,2,2,1]}]},
+    {t:'roman',v:[{t0:420,t1:570,w:'half past IX',n:'9:30'},{t0:180,t1:285,w:'quarter to V',n:'4:45'},{t0:600,t1:735,w:'quarter past XII',n:'12:15'},{t0:240,t1:420,w:'VII o’clock',n:'7:00'}]},
     {t:'graph',v:[{s:100,d:20},{s:90,d:15},{s:100,d:25},{s:70,d:10}]}];
   const S={r:0,lives:3,busy:false,done:false,vr:{},intro:false};
   const V=()=>{const q=Q[S.r];return q.v[(S.vr[S.r]||0)%q.v.length]};
@@ -40,7 +41,7 @@ mount(root){
   const arena=el('g',{},root),qL=el('g',{},root),side=el('g',{},root),pane=el('g',{},root),hud=el('g',{},root);
   const ec=eclipseFig(side,{s:.9});ec.g.setAttribute('transform','translate(500,190)');const lifeL=el('g',{},hud),phL=el('g',{},hud);
   function drawLives(){lifeL.innerHTML='';for(let k=0;k<3;k++){const on=k<S.lives,g=el('g',{transform:`translate(${30+k*30},34)`},lifeL);el('path',{d:'M0,-12 l3.5,7.5 8.2,1 -6,5.6 1.6,8.1 -7.3,-4 -7.3,4 1.6,-8.1 -6,-5.6 8.2,-1Z',fill:on?'#ffd23a':'#3a3450',stroke:on?'#c98a1a':'#55536a','stroke-width':1.5},g)}}
-  function drawPhases(){phL.innerHTML='';for(let k=0;k<6;k++){const g=el('g',{transform:`translate(${30+k*26},70)`},phL),lit=k<S.r;el('circle',{r:10,fill:lit?'#fff1d6':'#2a2048',stroke:lit?'#ffd27a':'#55536a','stroke-width':2},g)}}
+  function drawPhases(){phL.innerHTML='';for(let k=0;k<Q.length;k++){const g=el('g',{transform:`translate(${30+k*26},70)`},phL),lit=k<S.r;el('circle',{r:10,fill:lit?'#fff1d6':'#2a2048',stroke:lit?'#ffd27a':'#55536a','stroke-width':2},g)}}
   let loopT=0,cur=null;
   const card=t=>{el('rect',{x:30,y:130,width:410,height:340,rx:14,fill:'rgba(255,250,240,.96)',stroke:'#9a6cff','stroke-width':3},arena);el('text',{x:46,y:153,'font-size':13,'font-weight':800,fill:'#5a3a9a'},arena).textContent=t};
   const mix=(a,b)=>{const g=el('g',{transform:'translate(400,148)'},arena);el('text',{'text-anchor':'end','font-size':11,'font-weight':800,fill:'#9a6cff'},g).textContent=`${a} × ${b}`};
@@ -97,6 +98,15 @@ mount(root){
       words.split(' of ').forEach((w,i,a)=>el('text',{y:56+i*15,'text-anchor':'middle','font-size':11.5,'font-weight':800,fill:'#5a3a9a'},tc).textContent=i<a.length-1?w+' of':w);
       return{say:`It’s ${tWords(t0)}. The Eclipse spins the minute hand ${words}. Wind the clock on to the new time.`,go:'Check the clock',txt:'Check',check:()=>{const t=ck.get();if(t===t0)return{soft:true,msg:'Wind the minute hand round.'};
         return t===want?{ok:true,msg:`${capF(words)} of the minute hand is ${60*fn/fd} minutes: ${tWords(want)}.`}:{ok:false,msg:'A whole turn of the minute hand is one hour. Work out that fraction of an hour.'}}}},
+    /* Roman numerals × time: a clock face with only Roman numerals */
+    roman({t0,t1,w,n}){card('The Eclipse’s tower clock');mix('Roman numerals','Time');const ck=clockKit(arena,{x:200,y:312,r:118,nums:false,face:'#f4ecdc',rim:'#8a7a5e'});
+      for(let h=1;h<=12;h++){const a=h*30*Math.PI/180;el('text',{x:Math.sin(a)*118*.74,y:-Math.cos(a)*118*.74+6,'text-anchor':'middle','font-size':h===8||h===12?14:16,'font-weight':700,fill:'#3a2418',style:`font-family:${ROAD_FONT}`},ck.numL).textContent=toRoman(h)}
+      ck.set(t0);dragWind(ck,{snap:15,min:t0,max:t0+300,label:'Clock: wind the minute hand on',can:()=>!S.busy});
+      const tk=el('g',{transform:'translate(376,232)'},arena);el('rect',{x:-52,y:-34,width:104,height:84,rx:8,fill:'#fff4e6',stroke:'#8a5a34','stroke-width':2,'stroke-dasharray':'5 3'},tk);
+      el('text',{y:-14,'text-anchor':'middle','font-size':11,'font-weight':800,fill:'#7a5a3a'},tk).textContent='coach ticket';el('text',{y:4,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#7a5a3a'},tk).textContent='leaves at';
+      w.split(' ').reduce((rows,x)=>{const l=rows[rows.length-1];if(l&&(l+' '+x).length<=11)rows[rows.length-1]=l+' '+x;else rows.push(x);return rows},[]).forEach((ln,i)=>el('text',{y:24+i*16,'text-anchor':'middle','font-size':14,'font-weight':800,fill:'#3a2418',style:`font-family:${ROAD_FONT}`},tk).textContent=ln);
+      return{say:`The Eclipse’s clock only has Roman numerals. The coach leaves at ${w}. Wind the clock on to that time.`,go:'Check the clock',txt:'Check',check:()=>{const t=ck.get();if(t===t0)return{soft:true,msg:'Wind the minute hand round.'};
+        return t===t1?{ok:true,msg:`${capF(w)}: that’s ${n}.`}:{ok:false,msg:`Find the Roman numeral on the ticket on the clock face first. The short hand belongs near it.`}}}},
     /* decimals × money: the same price, again and again */
     shop({n,p,purse}){card('Lollies for the party');mix('Decimals','Money');const pur=[...purse],paid=[],tot=n*p,L=el('g',{},arena);
       for(let i=0;i<n;i++)sweetFig(arena,70+i*46,214,'lolly',1.2);const tg=el('g',{transform:`translate(${86+n*46},214)`},arena);el('rect',{x:-6,y:-16,width:96,height:32,rx:8,fill:'#fff4e6',stroke:'#c9a77a','stroke-width':2},tg);el('text',{x:42,y:6,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#3a2418'},tg).textContent=`£${(p/100).toFixed(2)} each`;
@@ -118,13 +128,13 @@ mount(root){
         const stop=Math.min(flag,end),left=Math.max(0,s0-d*flag);return{ok:flag===end,msg:flag===end?`${d}% more each hour: ${s0}% gone in ${end} hours. The moon is free!`:flag<end?`At hour ${flag} the moon is still ${left}% dark. Follow the line down to 0%.`:`The line reached 0% before hour ${flag}. Follow it down and stop where it touches the bottom.`,
           anim:dn=>{let h=2;const f=()=>{if(h>=Math.max(stop,2)){dn();return}h++;dl([[WX(h-1),fr.yOf(s0-d*(h-1))],[WX(h),fr.yOf(s0-d*h)]]);SFX.pop(.7);later(420,f)};f()}}}}}};
   function hit(msg){S.busy=true;ec.mood('oh');SFX.chime();SFX.whoosh&&SFX.whoosh();shake(3);floatText(500,92,['Ooh!','No!','My shadow!','Stop that!','Too bright!','Nooo!'][S.r],{col:'#ff7eb6',size:20});
-    decQ(qL,[['t','Moonlight back!']],true,null);say(`${msg}`);ec.slide(1-(S.r+1)/6,1100);later(700,()=>{S.r++;drawPhases()});later(3200,()=>{ec.mood('');if(S.r>=Q.length)finale();else load()})}
+    decQ(qL,[['t','Moonlight back!']],true,null);say(`${msg}`);ec.slide(1-(S.r+1)/Q.length,1100);later(700,()=>{S.r++;drawPhases()});later(3200,()=>{ec.mood('');if(S.r>=Q.length)finale();else load()})}
   function miss(msg){S.busy=true;SFX.wrong();S.lives--;drawLives();shake(3);ec.mood('');SFX.laugh&&SFX.laugh();say(`${msg} The Eclipse giggles…`);S.vr[S.r]=(S.vr[S.r]||0)+1;later(3800,()=>{if(S.lives<=0)lost();else load()})}
-  function lost(){S.lives=3;if(S.r>0){S.r--;S.vr[S.r]=(S.vr[S.r]||0)+1;ec.slide(1-S.r/6,700);drawPhases()}say('No stars left, and the shadow crept back a little. Try again!');later(2600,load)}
+  function lost(){S.lives=3;if(S.r>0){S.r--;S.vr[S.r]=(S.vr[S.r]||0)+1;ec.slide(1-S.r/Q.length,700);drawPhases()}say('No stars left, and the shadow crept back a little. Try again!');later(2600,load)}
   function finale(){S.done=true;S.busy=true;arena.innerHTML='';pane.innerHTML='';SFX.fanfare();ec.mood('sad');
     tween(1600,t=>ec.g.setAttribute('transform',`translate(${lerp(500,300,t).toFixed(1)},${lerp(190,240,t).toFixed(1)}) scale(${lerp(.9,1.6,t).toFixed(3)})`),null,ease.inOut);
-    const crew=el('g',{},arena);[[g=>pipFig(g,.9),110,450],[g=>pollyFig(g,.8),190,470],[g=>tockFig(g,.6),270,480],[g=>shellyFig(g,.7),350,476],[g=>kaiFig(g,.6),430,466],[g=>glimFig(g,22),505,446]].forEach(([mk,x,y],i)=>later(900+i*260,()=>{const w=el('g',{transform:`translate(${x},${y+40})`},crew);try{const f=mk(w);if(f&&f.cheer)later(300,()=>f.cheer())}catch(e){}
-      tween(500,t=>w.setAttribute('transform',`translate(${x},${(y+40-40*t).toFixed(1)})`),null,ease.back);bell(noteHz([7,9,11,12,14,16][i]),.08,1.4)}));
+    const crew=el('g',{},arena);[[g=>pipFig(g,.9),84,450],[g=>pollyFig(g,.8),152,470],[g=>tockFig(g,.6),220,480],[g=>shellyFig(g,.7),290,476],[g=>dexFig(g,.55),366,498],[g=>kaiFig(g,.6),440,466],[g=>glimFig(g,22),512,446]].forEach(([mk,x,y],i)=>later(900+i*260,()=>{const w=el('g',{transform:`translate(${x},${y+40})`},crew);try{const f=mk(w);if(f&&f.cheer)later(300,()=>f.cheer())}catch(e){}
+      tween(500,t=>w.setAttribute('transform',`translate(${x},${(y+40-40*t).toFixed(1)})`),null,ease.back);bell(noteHz([7,9,11,12,14,16,17][i]),.08,1.4)}));
     for(let k=0;k<14;k++)later(400+k*200,()=>burst(60+Math.random()*480,100+Math.random()*320,{n:10,cols:['#fff1d6','#ffd23a','#ff9ed2','#8fd6ff','#8ff0c8']}));
     decQ(qL,[['t','The moon is full!']],true,null);say('The shadow slides off and the full moon rises. Every guide from every world is here to cheer. You did it, all of it!');unlock('eclipse');clearIsland('eclipse');
     later(7600,()=>{const s=navStone({label:'Play again',onTap:()=>{S.r=0;S.lives=3;S.done=false;S.vr={};S.intro=true;go('eclipse')}});s.ready(true)})}
@@ -132,9 +142,9 @@ mount(root){
     decQ(qL,[['t','The Eclipse']],false,null);const b=el('g',{transform:'translate(240,300)'},arena);el('rect',{x:-200,y:-110,width:400,height:200,rx:18,fill:'#2a2048',stroke:'#ff7eb6','stroke-width':3},b);
     ['Hee hee! It was ME all along!','I sent the Gloom, the Muddler, the Magpie,','the Kraken, the Smudge, the Inkblot, the Snooze,','Captain Grabbit AND Fudge, to muddle every world,','so I could gobble up the moon!'].forEach((t,i)=>el('text',{y:-62+i*30,'text-anchor':'middle','font-size':i?14:18,'font-weight':800,fill:i?'#e8dcff':'#ff7eb6'},b).textContent=t);
     decGo(arena,560,500,'Begin: face the Eclipse',()=>{SFX.pop(1.2);S.intro=true;load()},'Go');
-    say('Six puzzles, each from two worlds. Every right answer pushes the shadow off the moon!')}
-  function load(){if(!S.intro)return intro();EPOCH++;FX.innerHTML='';arena.innerHTML='';pane.innerHTML='';S.busy=false;navDots(Q.length,S.r,true);drawLives();drawPhases();ec.setCover(1-S.r/6);
-    loop(dt=>{loopT+=dt;ec.tick(loopT)});const q=Q[S.r];cur=M[q.t](V());decQ(qL,[['t',`puzzle ${S.r+1} of 6`]],false,null);
+    say('Seven puzzles, each from two worlds. Every right answer pushes the shadow off the moon!')}
+  function load(){if(!S.intro)return intro();EPOCH++;FX.innerHTML='';arena.innerHTML='';pane.innerHTML='';S.busy=false;navDots(Q.length,S.r,true);drawLives();drawPhases();ec.setCover(1-S.r/Q.length);
+    loop(dt=>{loopT+=dt;ec.tick(loopT)});const q=Q[S.r];cur=M[q.t](V());decQ(qL,[['t',`puzzle ${S.r+1} of ${Q.length}`]],false,null);
     decGo(arena,560,500,cur.go,()=>{if(S.busy)return;const r=cur.check();if(r.soft){say(r.msg);return}if(r.anim){S.busy=true;r.anim(()=>{S.busy=false;r.ok?hit(r.msg):miss(r.msg)});return}if(r.ok)hit(r.msg);else miss(r.msg)},cur.txt);
     say(cur.say)}
   W.eclipse.dbgQ=()=>({t:Q[S.r].t,v:V(),r:S.r,lives:S.lives,intro:S.intro});

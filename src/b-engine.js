@@ -332,7 +332,8 @@ function svgFrac(p,x,y,n,d,sz=16){
   return g;
 }
 let _mc=null;const tWidth=(t,sz)=>{try{_mc=_mc||document.createElement('canvas').getContext('2d');_mc.font=`700 ${sz*.85}px ${getComputedStyle(document.documentElement).getPropertyValue('--font-body')||'sans-serif'}`;const w=_mc.measureText(t).width;if(w>0)return w+10}catch(e){}return t.length*sz*.44+8};
-const partW=(pt,sz)=>pt[0]==='f'?Math.max(String(pt[1]).length,String(pt[2]).length)*sz*.6+12:pt[0]==='w'?(String(pt[1]).length+(String(pt[1]).match(/%/g)||[]).length*.75-(String(pt[1]).match(/\./g)||[]).length*.35)*sz*.62+6:pt[0]==='t'?tWidth(String(pt[1]),sz):22;
+const ROMW={I:.3,V:.68,X:.66,L:.54,C:.7,D:.74,M:.88};
+const partW=(pt,sz)=>pt[0]==='w'&&/^[IVXLCDM]+$/.test(String(pt[1]))?[...String(pt[1])].reduce((a,c)=>a+ROMW[c],0)*sz*1.25+10:pt[0]==='f'?Math.max(String(pt[1]).length,String(pt[2]).length)*sz*.6+12:pt[0]==='w'?(String(pt[1]).length+(String(pt[1]).match(/%/g)||[]).length*.75-(String(pt[1]).match(/\./g)||[]).length*.35)*sz*.62+6:pt[0]==='t'?tWidth(String(pt[1]),sz):22;
 function exprWidth(parts,sz=17){return parts.reduce((a,pt)=>a+partW(pt,sz),0)}
 function svgExpr(p,x,y,parts,sz=17,anchor='start'){
   const g=el('g',{class:'num'},p);let cx=anchor==='middle'?x-exprWidth(parts,sz)/2:x;
