@@ -19,7 +19,7 @@ mount(root){
   const mouth=el('path',{d:'M-10,12 Q0,20 10,12',stroke:'#3a1d5a','stroke-width':2.5,fill:'none','stroke-linecap':'round'},impIn);
   const GEMS=range(0,7).map(i=>{const a=-Math.PI/2+i*Math.PI/4;return el('circle',{cx:MX+Math.cos(a)*58,cy:MY+Math.sin(a)*76,r:6,fill:'#3a2d5e',stroke:'#fff4e6','stroke-width':1.5},mirL)});
   const GC=['#ffb34d','#6fe3cd','#ffe066','#f0475f','#8fd6ff','#ff7eb6','#7fd36b','#c9a2ff'];
-  const litGem=(i,on)=>{GEMS[i].setAttribute('fill',on?GC[i]:'#3a2d5e');if(on){GEMS[i].setAttribute('filter','url(#glow)');popIn(GEMS[i],1.8)}else GEMS[i].removeAttribute('filter')};
+  const litGem=(i,on)=>{GEMS[i].setAttribute('fill',on?GC[i]:'#3a2d5e');if(on){popIn(GEMS[i],1.8)}};
   const impMood=m=>{mouth.setAttribute('d',m==='laugh'?'M-12,10 Q0,26 12,10Z':m==='ow'?'M-6,16 a6,5 0 1 0 12,0 a6,5 0 1 0 -12,0':m==='happy'?'M-12,10 Q0,24 12,10':'M-10,12 Q0,20 10,12');mouth.setAttribute('fill',m==='laugh'||m==='ow'?'#3a1d5a':'none')};
   /* lights */
   const heartL=el('g',{},hud);

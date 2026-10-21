@@ -67,7 +67,7 @@ function lighthouseBody(g,{lit=false,s=1}){
   el('path',{d:'M-7,40 v-16 a7,7 0 0 1 14,0 v16Z',fill:'#4a3a62'},g);el('rect',{x:-4,y:-40,width:8,height:10,rx:2,fill:'#4a3a62'},g);
   el('rect',{x:-25,y:-102,width:50,height:7,rx:3,fill:'#3a3058'},g);for(let k=-3;k<=3;k++)el('rect',{x:k*7-1,y:-110,width:2,height:9,fill:'#3a3058'},g);el('rect',{x:-24,y:-112,width:48,height:3,rx:1.5,fill:'#3a3058'},g);
   el('rect',{x:-15,y:-130,width:30,height:28,rx:4,fill:lit?'#fff3b0':'#2e2850',stroke:'#3a3058','stroke-width':3},g);
-  if(lit){el('circle',{cx:0,cy:-116,r:26,fill:'#fff0a0',opacity:.35,filter:'url(#glow)'},g);dotSpark(g,0,-116,6)}
+  if(lit){el('circle',{cx:0,cy:-116,r:34,fill:'url(#gHalo)',opacity:.6},g);dotSpark(g,0,-116,6)}
   el('path',{d:'M-21,-130 L0,-152 L21,-130Z',fill:'#e0506a'},g);el('circle',{cx:0,cy:-154,r:3.5,fill:'#3a3058'},g)}
 function lighthouseFig(parent,{lit=false}={}){const g=el('g',{},parent),beam=el('g',{},g);
   if(lit)[0,1].forEach(k=>el('path',{d:'M0,-116 L300,-160 L300,-72Z',fill:'#fff0a0',opacity:.2,transform:`rotate(${k*180} 0 -116)`},beam));

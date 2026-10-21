@@ -20,7 +20,7 @@ mount(root){
   const core=el('circle',{cx:MX,cy:MY,r:16,fill:'#3a3058'},lampL);
   el('path',{d:`M${MX-50},${MY-40} L${MX},${MY-74} L${MX+50},${MY-40}Z`,fill:'#e0506a',stroke:'#a03048','stroke-width':2},lampL);
   const GEMS=range(0,7).map(i=>{const a=-Math.PI/2+i*Math.PI/4;const g=el('path',{d:'M0,-13 L10,0 L0,13 L-10,0Z',fill:'#3a2d5e',stroke:'#fff4e6','stroke-width':2,transform:`translate(${(MX+Math.cos(a)*64).toFixed(1)},${(MY+Math.sin(a)*64).toFixed(1)})`},lampL);return g});
-  const litGem=(i,on)=>{GEMS[i].setAttribute('fill',on?GC[i]:'#3a2d5e');if(on){GEMS[i].setAttribute('filter','url(#glow)')}else GEMS[i].removeAttribute('filter')};
+  const litGem=(i,on)=>{GEMS[i].setAttribute('fill',on?GC[i]:'#3a2d5e');if(on){}};
   const birdG=el('g',{},lampL),mp=magpieFig(birdG,1.25),dot=dotSpark(mp.head,-31,5,4.5);dot.removeAttribute('class');
   const mood=m=>{mp.beak.setAttribute('d',m==='laugh'?'M-11,-1 L-29,1 L-11,4 M-11,6 L-27,12 L-11,10Z':'M-11,1 L-29,5 L-11,9Z')};
   /* lights */
@@ -77,7 +77,7 @@ mount(root){
   function finale(){S.done=true;S.busy=true;SFX.fanfare();SFX.wake&&SFX.wake();arena.innerHTML='';
     const fx=MX-64,fy=MY-104;dot.remove();const d=dotSpark(lampL,fx,fy,6);d.removeAttribute('class');mood('laugh');document.body.classList.remove('dotless');
     tween(900,(t,p)=>d.setAttribute('transform',`translate(${lerp(fx,MX,t).toFixed(1)},${(lerp(fy,MY,t)-Math.sin(p*Math.PI)*50).toFixed(1)})`),()=>{
-      d.remove();glass.setAttribute('fill','#fff3b0');core.setAttribute('fill','#fff8d8');core.setAttribute('filter','url(#glow)');SFX.chime();burst(MX,MY,{n:24});
+      d.remove();glass.setAttribute('fill','#fff3b0');core.setAttribute('fill','#fff8d8');SFX.chime();burst(MX,MY,{n:24});
       [0,1].forEach(k=>el('path',{d:`M${MX},${MY} L${MX-640},${MY-120} L${MX-640},${MY+120}Z`,fill:'#fff0a0',opacity:.16,transform:`rotate(${k*180} ${MX} ${MY})`},beam));
       let T=0;loop(dt=>{T+=dt;beam.setAttribute('transform',`rotate(${(Math.sin(T*.5)*35).toFixed(1)} ${MX} ${MY})`);birdG.setAttribute('transform',`translate(${(MX+6+Math.sin(T*1.3)*6).toFixed(1)},${(MY-92-Math.abs(Math.sin(T*2.6))*10).toFixed(1)})`)});
       GEMS.forEach((g,i)=>later(i*90,()=>ring(MX+Math.cos(-Math.PI/2+i*Math.PI/4)*64,MY+Math.sin(-Math.PI/2+i*Math.PI/4)*64,{col:GC[i],r1:40})));

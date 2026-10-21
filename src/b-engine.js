@@ -3,7 +3,8 @@
 const NS='http://www.w3.org/2000/svg';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-function el(tag,a,p){const e=document.createElementNS(NS,tag);if(a)for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+/* no blur filters: on big tablet screens they are redrawn with every animation frame and make the picture flicker */
+function el(tag,a,p){const e=document.createElementNS(NS,tag);if(a)for(const k in a){if(k==='filter'&&a[k]==='url(#glow)')continue;e.setAttribute(k,a[k])}if(p)p.appendChild(e);return e}
 const gcd=(a,b)=>b?gcd(b,a%b):a, lcm=(a,b)=>a/gcd(a,b)*b;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), lerp=(a,b,t)=>a+(b-a)*t;
 const U=27720; /* every piece size 1..12 divides this, so sizes add exactly */
@@ -15,7 +16,8 @@ const SVG=$('#stage'),BACK=$('#back'),WORLD=$('#world'),FX=$('#fx'),CAM=$('#cam'
 let EPOCH=0;
 function tween(dur,fn,done,e=ease.out){const ep=EPOCH;if(RM)dur=Math.min(dur,60);const t0=performance.now();const f=now=>{if(ep!==EPOCH)return;const p=clamp((now-t0)/dur,0,1);fn(e(p),p);if(p<1)requestAnimationFrame(f);else if(done)done()};requestAnimationFrame(f)}
 function later(ms,fn){const ep=EPOCH;setTimeout(()=>{if(ep===EPOCH)fn()},RM?Math.min(ms,90):ms)}
-function loop(fn){const ep=EPOCH;let last=performance.now();const f=now=>{if(ep!==EPOCH)return;const dt=Math.min(.04,(now-last)/1000);last=now;fn(dt);requestAnimationFrame(f)};requestAnimationFrame(f)}
+/* background motion runs at about 30 frames a second and rests while the app is hidden: half the drawing work */
+function loop(fn){const ep=EPOCH;let last=performance.now();const f=now=>{if(ep!==EPOCH)return;if(now-last<30||document.hidden){requestAnimationFrame(f);return}const dt=Math.min(.05,(now-last)/1000);last=now;fn(dt);requestAnimationFrame(f)};requestAnimationFrame(f)}
 
 /* sound: smaller pieces sing higher */
 let AC=null,SOUND=true,MASTER=null,ECHO=null,NOISE=null;
@@ -324,7 +326,7 @@ function svgExpr(p,x,y,parts,sz=17,anchor='start'){
    (the goggles never hide it). '?' marks what she has to find; done=true fills it in and lights the edge */
 function qBox(parent,x,y,parts,{sz=20,done=false}={}){
   const g=el('g',{class:'qbox'},parent),w=exprWidth(parts,sz)+34,h=sz*3.1;
-  if(done)el('rect',{x:x-w/2-4,y:y-h/2-4,width:w+8,height:h+8,rx:15,fill:'#fff0a0',opacity:.35,filter:'url(#glow)'},g);
+  if(done)el('rect',{x:x-w/2-7,y:y-h/2-7,width:w+14,height:h+14,rx:18,fill:'none',stroke:'#fff0a0','stroke-width':6,opacity:.3},g);
   el('rect',{x:x-w/2,y:y-h/2,width:w,height:h,rx:12,fill:'#fff4e6',stroke:done?'#fff0a0':'#c9a77a','stroke-width':done?4:2.5},g);
   const e=svgExpr(g,x,y,parts,sz,'middle');e.setAttribute('class','');
   e.querySelectorAll('text').forEach(t=>t.setAttribute('style',`fill:${/\?/.test(t.textContent)?'#8a5cf0':'#3a2418'};font-weight:700`));e.querySelectorAll('line').forEach(l=>l.setAttribute('stroke','#3a2418'));
