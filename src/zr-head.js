@@ -65,13 +65,17 @@ function cartFig(parent,{s=1,sacks=2,col='#b07a44',tag=null,handle=true,lift=0}=
 
 /* ---------- the hill road: milestones sit in the valleys (every `step`), peaks halfway between ----------
    values run lo..hi left to right. h(v)=amp·sin²(π(v−lo)/step): a cart rolls downhill to the nearer milestone. */
-function hillRoad(parent,{x0=40,x1=560,base=430,lo,hi,step,amp=null,wide=true,tick=0,lab=true,fmt=v=>fmtR(v),blank=false,col='#7ab85a',stones=true,sz=15}){
+function hillRoad(parent,{x0=40,x1=560,base=430,lo,hi,step,amp=null,wide=true,sock=true,tick=0,lab=true,fmt=v=>fmtR(v),blank=false,col='#7ab85a',stones=true,sz=15}){
   const g=el('g',{},parent),k=(x1-x0)/(hi-lo);if(amp==null)amp=Math.min(92,step*k*.34);const xOf=v=>x0+(v-lo)*k,vOf=x=>lo+(x-x0)/k,hOf=v=>amp*Math.pow(Math.sin(Math.PI*(v-lo)/step),2),yOf=v=>base-hOf(v);
   const ang=v=>{const dv=(hi-lo)/400;return clamp(Math.atan2(-(hOf(v+dv)-hOf(v-dv))/(2*dv*k),1)*57.3,-34,34)};
   const L0=wide?-700:x0-14,L1=wide?1300:x1+14;let d=`M${L0},${base} L${x0},${base}`;for(let i=0;i<=240;i++){const v=lo+(hi-lo)*i/240;d+=` L${xOf(v).toFixed(1)},${yOf(v).toFixed(1)}`}d+=` L${L1},${base}`;
   el('path',{d:d+` L${L1},${base+(wide?400:44)} L${L0},${base+(wide?400:44)}Z`,fill:col},g);
   el('path',{d:d,fill:'none',stroke:'#cbb98e','stroke-width':12,'stroke-linejoin':'round'},g);el('path',{d:d,fill:'none',stroke:'#e2d3aa','stroke-width':6,'stroke-dasharray':'14 8','stroke-linejoin':'round'},g);
   if(tick){for(let v=lo;v<=hi+1e-9;v+=tick){const x=xOf(v),y=yOf(v);el('line',{x1:x,x2:x,y1:y+7,y2:y+14,stroke:'#4a6a3a','stroke-width':1.6},g)}}
+  /* the windsock: on the Old Road the wind always blows forwards, so a cart balanced on a peak rolls on (halfway rounds up) */
+  if(sock){const w=el('g',{transform:`translate(${x0-14},${base-amp-58})`},g);el('line',{x1:0,y1:0,x2:0,y2:58,stroke:'#6a4a2a','stroke-width':3},w);
+    [0,1,2].forEach(i=>el('path',{d:`M${2+i*12},${-1+i*1.6} L${14+i*12},${.6+i*1.6} L${14+i*12},${13.4-i*1.6} L${2+i*12},${15-i*1.6}Z`,fill:i%2?'#fff4e6':'#e8413e',stroke:'#8a2a1a','stroke-width':1},w));
+    el('text',{x:20,y:30,'text-anchor':'middle','font-size':11,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},w).textContent='wind →'}
   const S=[];if(stones)for(let v=lo;v<=hi+1e-9;v+=step){const m=milestone(g,xOf(v),yOf(v)+9,{txt:'',w:28,h:44,label:lab&&!blank?fmt(+v.toFixed(6)):null});S.push({v:+v.toFixed(6),m})}
   const R={g,xOf,vOf,yOf,hOf,ang,k,lo,hi,step,stones:S,
     /* stand a cart on the road at value v */

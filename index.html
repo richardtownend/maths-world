@@ -944,7 +944,7 @@ const IDEAS=[
   {k:'rsticks',w:'sticks',t:'Roman numerals began as tally sticks: I is one. Five sticks are tied into a hand, V, and two hands make an X, ten. Biggest first: XVII is 10 + 5 + 1 + 1 = 17.'},
   {k:'rmason',w:'mason',t:'Never four the same in a row. A small letter in front of a bigger one takes itself away: IV is 5 − 1 = 4, IX is 9, XL is 40, XC is 90. L is 50 and C is 100.'},
   {k:'ryear',w:'year',t:'To read a long Roman number, split it into thousands, hundreds, tens and ones: MCMXC is M | CM | XC = 1000 + 900 + 90 = 1990. D is 500 and M is 1000.'},
-  {k:'rhills',w:'hills',t:'Rounding to the nearest 10: which milestone is nearer? 37 is 3 from 40 and 7 from 30, so it rounds to 40. Exactly halfway, like 35, always rounds up.'},
+  {k:'rhills',w:'hills',t:'Rounding to the nearest 10: which milestone is nearer? 37 is 3 from 40 and 7 from 30, so it rounds to 40. Exactly halfway, like 35, always rounds up: on the Old Road the wind always blows forwards.'},
   {k:'rbig',w:'bighills',t:'Rounding to 100 or 1,000 is the same idea on bigger hills. Look at the next digit down: 3,720 to the nearest 1,000 looks at the 7 hundreds: 5 or more goes up, so 4,000.'},
   {k:'rgreat',w:'greatroad',t:'Every number from 245,000 up to 254,999 rounds to 250,000 (to the nearest 10,000). Rounding is a stretch of road, not a single spot.'},
   {k:'rinn',w:'inn',t:'Decimals round the same way: 2.37 to the nearest whole is 2, to one decimal place it is 2.4. Look at the digit just after the one you are keeping.'},
@@ -8239,13 +8239,17 @@ function cartFig(parent,{s=1,sacks=2,col='#b07a44',tag=null,handle=true,lift=0}=
 
 /* ---------- the hill road: milestones sit in the valleys (every `step`), peaks halfway between ----------
    values run lo..hi left to right. h(v)=amp·sin²(π(v−lo)/step): a cart rolls downhill to the nearer milestone. */
-function hillRoad(parent,{x0=40,x1=560,base=430,lo,hi,step,amp=null,wide=true,tick=0,lab=true,fmt=v=>fmtR(v),blank=false,col='#7ab85a',stones=true,sz=15}){
+function hillRoad(parent,{x0=40,x1=560,base=430,lo,hi,step,amp=null,wide=true,sock=true,tick=0,lab=true,fmt=v=>fmtR(v),blank=false,col='#7ab85a',stones=true,sz=15}){
   const g=el('g',{},parent),k=(x1-x0)/(hi-lo);if(amp==null)amp=Math.min(92,step*k*.34);const xOf=v=>x0+(v-lo)*k,vOf=x=>lo+(x-x0)/k,hOf=v=>amp*Math.pow(Math.sin(Math.PI*(v-lo)/step),2),yOf=v=>base-hOf(v);
   const ang=v=>{const dv=(hi-lo)/400;return clamp(Math.atan2(-(hOf(v+dv)-hOf(v-dv))/(2*dv*k),1)*57.3,-34,34)};
   const L0=wide?-700:x0-14,L1=wide?1300:x1+14;let d=`M${L0},${base} L${x0},${base}`;for(let i=0;i<=240;i++){const v=lo+(hi-lo)*i/240;d+=` L${xOf(v).toFixed(1)},${yOf(v).toFixed(1)}`}d+=` L${L1},${base}`;
   el('path',{d:d+` L${L1},${base+(wide?400:44)} L${L0},${base+(wide?400:44)}Z`,fill:col},g);
   el('path',{d:d,fill:'none',stroke:'#cbb98e','stroke-width':12,'stroke-linejoin':'round'},g);el('path',{d:d,fill:'none',stroke:'#e2d3aa','stroke-width':6,'stroke-dasharray':'14 8','stroke-linejoin':'round'},g);
   if(tick){for(let v=lo;v<=hi+1e-9;v+=tick){const x=xOf(v),y=yOf(v);el('line',{x1:x,x2:x,y1:y+7,y2:y+14,stroke:'#4a6a3a','stroke-width':1.6},g)}}
+  /* the windsock: on the Old Road the wind always blows forwards, so a cart balanced on a peak rolls on (halfway rounds up) */
+  if(sock){const w=el('g',{transform:`translate(${x0-14},${base-amp-58})`},g);el('line',{x1:0,y1:0,x2:0,y2:58,stroke:'#6a4a2a','stroke-width':3},w);
+    [0,1,2].forEach(i=>el('path',{d:`M${2+i*12},${-1+i*1.6} L${14+i*12},${.6+i*1.6} L${14+i*12},${13.4-i*1.6} L${2+i*12},${15-i*1.6}Z`,fill:i%2?'#fff4e6':'#e8413e',stroke:'#8a2a1a','stroke-width':1},w));
+    el('text',{x:20,y:30,'text-anchor':'middle','font-size':11,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},w).textContent='wind →'}
   const S=[];if(stones)for(let v=lo;v<=hi+1e-9;v+=step){const m=milestone(g,xOf(v),yOf(v)+9,{txt:'',w:28,h:44,label:lab&&!blank?fmt(+v.toFixed(6)):null});S.push({v:+v.toFixed(6),m})}
   const R={g,xOf,vOf,yOf,hOf,ang,k,lo,hi,step,stones:S,
     /* stand a cart on the road at value v */
@@ -8417,20 +8421,21 @@ mount(root){
 }};
 /* ---------- 2. The Mason: a small one in front takes away ---------- */
 W.mason={scene:'road',
-notes:`<p>The take-away rule, discovered rather than told. Milestones are narrow, so four of the same letter in a row won't fit: to carve 4 she needs a shorter way. A smaller letter carved in front of a bigger one takes itself away (it gets a red notch under it as soon as it's in front), so IV is 5 take away 1. Tap a letter from the tray to carve it on the end; tap a carved letter to knock it off. Check reads the stone aloud, letter by letter (+10, −1, +10…), and the total must match.</p>
+notes:`<p>The first round shows the rule by doing it: put an I behind a V and the stone reads 5 + 1 = 6 (VI); move it in front and it reads 5 − 1 = 4 (IV). Then the same with X and C: CX is 110, XC is 100 − 10 = 90. Each placement is read aloud and written as a sum.</p>
+<p>Then the take-away rule is used. Milestones are narrow, so four of the same letter in a row won't fit: to carve 4 she needs a shorter way. A smaller letter carved in front of a bigger one takes itself away (it gets a red notch under it as soon as it's in front), so IV is 5 take away 1. Tap a letter from the tray to carve it on the end; tap a carved letter to knock it off. Check reads the stone aloud, letter by letter (+10, −1, +10…), and the total must match.</p>
 <p>Then 9 (IX), a teen with a take-away (14 or 19), L for 50 and XL for 40, and C for 100 with XC for 90. Only I goes in front of V and X, and only X in front of L and C: other pairs are caught with a reason.</p>`,
 mount(root){
   const pick=a=>a[Math.floor(Math.random()*a.length)];
-  const R=[{ns:[4],L:'IVX'},{ns:[9],L:'IVX'},{ns:[14,19,24],L:'IVX'},{ns:[40,45,44],L:'IVXL'},{ns:[90,94,99],L:'IVXLC'}];
+  const R=[{explain:1},{ns:[4],L:'IVX'},{ns:[9],L:'IVX'},{ns:[14,19,24],L:'IVX'},{ns:[40,45,44],L:'IVXL'},{ns:[90,94,99],L:'IVXLC'}];
   const S={r:0,busy:false,won:false,n:0};
   const scene=el('g',{},root),stoneL=el('g',{},root),readL=el('g',{},root),qL=el('g',{},root),ui=el('g',{},root);const guide=dexGuide(ui);let cv=null;
   const st=navStone({label:'Next stone',onTap:()=>{S.r=(S.r+1)%R.length;load()}});
   navStone({glyph:'redo',label:'Start this stone again',onTap:()=>load()});
-  const parts=done=>[['w',S.n],['o','='],done?['w',toRoman(S.n)]:['o','?']];
-  function drawScene(){scene.innerHTML='';
+  const parts=done=>R[S.r].explain?[['t',done?'a small letter in front takes away':'in front, or behind?']]:[['w',S.n],['o','='],done?['w',toRoman(S.n)]:['o','?']];
+  function drawScene(tools=true){scene.innerHTML='';
     /* the mason's bench, the hammer and chisel */
     el('rect',{x:70,y:350,width:460,height:22,rx:6,fill:'#8a5a34',stroke:'#4a2a14','stroke-width':2},scene);[110,490].forEach(x=>el('rect',{x:x-8,y:372,width:16,height:60,fill:'#6a4220'},scene));
-    const h=el('g',{transform:'translate(524,240) rotate(-30)'},scene);el('rect',{x:-4,y:0,width:8,height:46,rx:3,fill:'#8a5a34'},h);el('rect',{x:-16,y:-10,width:32,height:16,rx:4,fill:'#8a92a8',stroke:'#4a5268','stroke-width':2},h);
+    if(!tools)return;const h=el('g',{transform:'translate(524,240) rotate(-30)'},scene);el('rect',{x:-4,y:0,width:8,height:46,rx:3,fill:'#8a5a34'},h);el('rect',{x:-16,y:-10,width:32,height:16,rx:4,fill:'#8a92a8',stroke:'#4a5268','stroke-width':2},h);
     const c=el('g',{transform:'translate(96,248) rotate(28)'},scene);el('rect',{x:-3,y:-30,width:6,height:44,rx:2,fill:'#a8b0c4',stroke:'#4a5268','stroke-width':1.5},c);el('rect',{x:-5,y:-46,width:10,height:18,rx:3,fill:'#8a5a34'},c)}
   /* only I before V/X, X before L/C, C before D/M; and only one in front */
   function why(str){if(/(IL|IC|ID|IM|XD|XM|VX|VL|VC|VD|VM|LC|LD|LM|DM)/.test(str))return'Only I can go in front of V and X, and only X in front of L and C.';
@@ -8444,12 +8449,33 @@ mount(root){
       later(2800,()=>{readL.innerHTML='';S.busy=false})}})}
   function win(){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(300,296,{n:16});const s=toRoman(S.n);
     const take=s.match(/IV|IX|XL|XC|CD|CM/g)||[];say(`${s} = ${S.n}.${take.length?' '+take.map(t=>`${t} is ${RV[t[1]]} take away ${RV[t[0]]}`).join(', and ')+'.':''}`);
-    if(S.r>=1)unlock('rmason');later(1400,()=>st.ready(true))}
-  function load(){EPOCH++;FX.innerHTML='';readL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);const q=R[S.r];
+    if(S.r>=2)unlock('rmason');later(1400,()=>st.ready(true))}
+  /* round 1: in front, or behind? The same two letters, read both ways */
+  const STEPS=[['V','I',1],['V','I',0],['C','X',1],['C','X',0]];
+  function explain(){let k=0,side=null;const eq=el('g',{},readL),learnt=el('g',{},ui);
+    const draw=()=>{stoneL.innerHTML='';const [big,sm]=STEPS[k],g=el('g',{transform:'translate(300,296)'},stoneL),W=300,H=110;
+      el('rect',{x:-W/2,y:-H/2,width:W,height:H,rx:14,fill:STONE.face,stroke:STONE.edge,'stroke-width':3},g);
+      const cw=48*CW;if(side==null)carve(g,0,16,big,{sz:48});else{const str=side?big+sm:sm+big;[...str].forEach((c,i)=>carve(g,(i-.5)*cw,16,c,{sz:48}));if(!side)el('path',{d:`M${-cw/2-8},${44} h16`,stroke:'#c9413a','stroke-width':4,'stroke-linecap':'round'},g)}
+      [[-1,'in front'],[1,'behind']].forEach(([d,t])=>{const sg=el('g',{transform:`translate(${d*96},0)`},g);
+        if(side==null)el('rect',{x:-26,y:-34,width:52,height:62,rx:8,fill:'rgba(255,255,255,.35)',stroke:STONE.side,'stroke-width':2,'stroke-dasharray':'5 4'},sg);
+        el('text',{y:-H/2-10,'text-anchor':'middle','font-size':14,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},sg).textContent=t;
+        el('rect',{x:-36,y:-50,width:72,height:100,fill:'transparent'},sg);interact(sg,{label:`Put the ${sm} ${d<0?'in front of':'behind'} the ${big}`,tap:()=>{if(S.busy)return;side=d>0?1:0;eq.innerHTML='';SFX.tick(d>0?5:2);draw()}})})};
+    const ask=()=>{const [big,sm,b]=STEPS[k];say(`Put the ${sm} ${b?'behind':'in front of'} the ${big}, then check what the stone says.`)};
+    S.check=()=>{if(S.busy)return;const [big,sm,b]=STEPS[k];if(side==null){say(`Tap a space: in front of the ${big}, or behind it.`);return}
+      const str=side?big+sm:sm+big;S.busy=true;readL.querySelectorAll('.ro').forEach(n=>n.remove());const ro=readOut(readL,300,312,str,{sz:48,done:v=>{
+        eq.innerHTML='';const t=el('text',{x:300,y:410,'text-anchor':'middle','font-size':26,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':4,'paint-order':'stroke'},eq);
+        [[str+' = ',null],[fmtR(RV[big]),null],[side?' + ':' − ',side?'#8ff0c8':'#ff9a9a'],[fmtR(RV[sm]),null],[' = '+fmtR(v),null]].forEach(([x,c])=>{const sp=el('tspan',c?{fill:c}:{},t);sp.textContent=x});
+        if(side!==b){SFX.clonk();say(side?`Behind the ${big}, the ${sm} adds: ${str} is ${v}. Now put it in front.`:`In front of the ${big}, the ${sm} takes away: ${str} is ${v}! Now try it behind.`);later(600,()=>{S.busy=false})}
+        else{SFX.chime();const c=el('g',{transform:`translate(${520},${170+k*40})`},learnt);el('rect',{x:-48,y:-16,width:96,height:30,rx:8,fill:'#fff4e6',stroke:side?'#3aa86a':'#c9413a','stroke-width':2},c);el('text',{y:6,'text-anchor':'middle','font-size':15,'font-weight':800,fill:'#3a2418'},c).textContent=`${str} = ${v}`;popIn(c,.5);
+          say(side?`Behind, it adds: ${fmtR(RV[big])} + ${fmtR(RV[sm])} = ${fmtR(v)}.`:`In front, it takes away: ${fmtR(RV[big])} − ${fmtR(RV[sm])} = ${fmtR(v)}. That’s how the Romans write ${fmtR(v)}.`);
+          later(2600,()=>{k++;side=null;eq.innerHTML='';readL.querySelectorAll('.ro').forEach(n=>n.remove());S.busy=false;if(k>=STEPS.length){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);say('A small letter in front takes itself away: IV is 5 − 1, XC is 100 − 10. Behind, it adds.');later(1400,()=>st.ready(true));stoneL.innerHTML='';return}draw();ask()})}}});ro.classList.add('ro')};
+    draw();ask()}
+  function load(){EPOCH++;FX.innerHTML='';readL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);const q=R[S.r];S.check=null;
+    if(q.explain){Object.assign(S,{busy:false,won:false,n:0});st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawScene(false);cv={get:()=>''};decGo(ui,548,470,'Check the stone',()=>S.check&&S.check(),'Check');explain();return}
     Object.assign(S,{busy:false,won:false,n:pick(q.ns)});st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);drawScene();stoneL.innerHTML='';
     cv=carver(stoneL,{x:300,y:296,letters:q.L,max:8,sz:44,ty:446,can:()=>!S.busy&&!S.won});
     decGo(ui,548,470,'Check the stone',check,'Check');
-    say(S.r===0?'Carve 4 on this milestone. Careful: four sticks in a row won’t fit!':S.r===1?'Carve 9. Remember the trick with a small letter in front.':S.r===3?'A new letter: L is 50. Carve the number.':S.r===4?'C is 100. Carve the number.':'Carve the number on the milestone.')}
+    say(S.r===1?'Carve 4 on this milestone. Careful: four sticks in a row won’t fit!':S.r===2?'Carve 9. Remember the trick with a small letter in front.':S.r===4?'A new letter: L is 50. Carve the number.':S.r===5?'C is 100. Carve the number.':'Carve the number on the milestone.')}
   W.mason.dbgQ=()=>({r:S.r,n:S.n,str:cv.get(),busy:S.busy});
   S.r=resumeAt(R.length);load();
 }};
@@ -8544,14 +8570,14 @@ mount(root){
     S.busy=true;say('Dex lets go…');
     road.roll(cart,S.v,end=>{if(end===S.pick){win(end);return}SFX.wrong();shake(2);
       const mid=Math.abs(S.v-roundTo(S.v,10))===5||(S.v%10===5);
-      say(mid?`Exactly halfway, so it balanced on the top until the wind blew it on to ${end}. Halfway always rounds up.`:q.blank?'It rolled down to the nearer milestone. Look which side of the hilltop it’s on.':`${S.v} is ${Math.abs(end-S.v)} from ${end} but ${Math.abs(S.pick-S.v)} from ${S.pick}: it rolls to the nearer one.`);
-      later(3400,()=>{S.busy=false;load(true)})},{wind:()=>{gust(cartL,road.xOf(S.v),road.yOf(S.v)-40);say('It’s balanced right on the top… here comes the wind!')}})}
+      say(mid?`Exactly halfway, so it balanced on the top until the wind blew it on to ${end}. On the Old Road the wind always blows forwards: halfway always rounds up.`:q.blank?'It rolled down to the nearer milestone. Look which side of the hilltop it’s on.':`${S.v} is ${Math.abs(end-S.v)} from ${end} but ${Math.abs(S.pick-S.v)} from ${S.pick}: it rolls to the nearer one.`);
+      later(3400,()=>{S.busy=false;load(true)})},{wind:()=>{gust(cartL,road.xOf(S.v),road.yOf(S.v)-40);say('Exactly halfway: balanced on the top… and the wind always blows forwards!')}})}
   function judgeMany(){const want=new Set(S.carts.filter(c=>c.end===40).map(c=>c.v)),got=S.sel;
     if(want.size===got.size&&[...want].every(v=>got.has(v))){win(40);return}SFX.wrong();shake(2);
     const missed=[...want].filter(v=>!got.has(v)),wrong=[...got].filter(v=>!want.has(v));
     say(wrong.length?`${wrong[0]} rolled to ${roundTo(wrong[0],10)}, not 40.${wrong[0]%10===5?' Exactly halfway, so the wind blew it on.':''}`:missed[0]%10===5?`${missed[0]} is exactly halfway, so the wind blew it on to 40.`:`${missed[0]} rolled to 40 too: it’s nearer 40 than ${missed[0]<40?30:50}.`);later(3600,()=>{S.busy=false;load(true)})}
   function win(end){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(road.xOf(end),road.yOf(end)-30,{n:16});const q=R[S.r];
-    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')} all end up at 40${S.sel.has(35)?' (35 is exactly halfway, so the wind blows it on)':''}.`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway: the wind blows it on. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
+    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')} all end up at 40${S.sel.has(35)?' (35 is exactly halfway, so the wind blows it on)':''}.`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway, so it balanced on the top. The wind always blows forwards, so it rolled on: halfway rounds up. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
     if(S.r>=2)unlock('rhills');later(1400,()=>st.ready(true))}
   function load(again){EPOCH++;FX.innerHTML='';cartL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);flag=null;const q=R[S.r];
     const prev=S.v;Object.assign(S,{busy:false,won:false,at:null,pick:null,sel:new Set(),carts:[]});S.v=q.vs?pick(q.vs.filter(v=>v!==prev).length?q.vs.filter(v=>v!==prev):q.vs):0;
@@ -8564,7 +8590,7 @@ mount(root){
     if(q.place){cart.put(78,170,0);
       const shelf=el('g',{},cartL);el('text',{x:78,y:192,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#3a2418'},shelf).textContent='drag me';
       interact(cart.g,{label:`The ${S.v} cart: drag it onto the road`,down:()=>({}),move:p=>{if(S.busy||S.won)return;shelf.remove();const v=clamp(Math.round(road.vOf(p.x)),q.lo,q.hi);if(v!==S.at){S.at=v;road.place(cart,v);SFX.tick(v%8)}},tap:()=>{}});
-      say(S.r===2?`This cart is ${S.v}. Drag it to ${S.v} on the road, then tap the milestone it will roll to.`:`Drag the ${S.v} cart onto the road. Then where will it roll?`)}
+      say(S.r===2?`This cart is ${S.v}. Drag it to ${S.v} on the road, then tap the milestone it will roll to.`:`This cart is exactly halfway between two milestones. Drag it onto the road. Which way will it go? Look at the windsock.`)}
     else{road.place(cart,S.v);
       say(S.r===0?'Dex has stopped the cart on a hill. When he lets go, which milestone will it roll to? Tap it, then Go.':'Close to the top this time! Which milestone will it roll down to?')}}
   W.hills.dbgQ=()=>({r:S.r,v:S.v,at:S.at,pick:S.pick,busy:S.busy,won:S.won,carts:S.carts.map(c=>c.v),xs:road?[road.xOf(S.v),road.yOf(S.v)]:null,cx:cart?[cart.x,cart.y]:null});
@@ -8592,7 +8618,7 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
   function tappable(ri,label=v=>`Milestone ${F(v)}${roads.length>1?` (${['top','middle','bottom'][ri]} road)`:''}`){const r=roads[ri];r.stones.forEach(({v,m})=>{el('rect',{x:-24,y:-50,width:48,height:80,fill:'transparent'},m.g);
     const tap=()=>{if(S.busy||S.won)return;if(S.q.kind==='place'&&S.at==null){say(`First drag the cart to ${F(S.v)} on the road.`);return}S.picks[ri]=v;SFX.tick(Math.round(v/r.step)%8);flag(ri,v)};
     interact(m.g,{label:label(v),tap});const lo=el('rect',{x:r.xOf(v)-24,y:r.yOf(v)+2,width:48,height:42,fill:'transparent'},hitL);interact(lo,{label:label(v)+' label',tap})})}
-  const windAt=(r,v)=>()=>{gust(cartL,r.xOf(v),r.yOf(v)-40);say('Balanced right on the top… here comes the wind!')};
+  const windAt=(r,v)=>()=>{gust(cartL,r.xOf(v),r.yOf(v)-40);say('Exactly halfway, balanced on the top… and the wind always blows forwards!')};
   function fail(msg){SFX.wrong();shake(2);say(msg);later(3800,()=>{S.busy=false;load(true)})}
   function why(v,step,got){const e=roundTo(v,step),half=Math.abs(((v/step)%1+1)%1-.5)<1e-6;
     return half?`${F(v)} is exactly halfway, so the wind blows it on to ${F(e)}. Halfway rounds up.`:`${F(v)} is nearer ${F(e)} than ${F(got)}: it rolls down to ${F(e)}.`}
@@ -8611,8 +8637,9 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
       roads[0].roll(cart,S.v,end=>{if(Math.abs(g-end)<1e-9)win(end);else{S.wh.lock(false);fail(`It rolled to ${F(end)}. ${Math.abs(g-roundTo(g,q.step))>1e-9?`${F(g)} isn’t a milestone: they’re every ${F(q.step)}.`:why(S.v,q.step,g)}`)}},{wind:windAt(roads[0],S.v)});return}
     if(q.kind==='paint'){const [a,b]=S.pa.get(),lo=q.target-q.step/2,hi=q.target+q.step/2;S.busy=true;
       /* send carts down the painted stretch and just either side of it */
-      const vs=[...new Set([a-q.snap,a,(a+b)/2,b-q.snap,b].map(v=>roundTo(clamp(v,q.lo,q.hi),q.snap)))];cartL.innerHTML='';let left=vs.length;const res=[];
-      vs.forEach(v=>{const c=cartFig(cartL,{s:.55,sacks:1,handle:false});roads[0].place(c,v);roads[0].roll(c,v,end=>{res.push([v,end]);if(--left===0){
+      const okA0=Math.abs(a-lo)<1e-9,okB0=Math.abs(b-(hi-q.snap))<1e-9,miss=[];if(a>lo+1e-9)miss.push(a-q.snap);if(b<hi-q.snap-1e-9)miss.push(b+q.snap);
+      const vs=[...new Set([a,a+(b-a)/4,(a+b)/2,a+3*(b-a)/4,b].map(v=>roundTo(v,q.snap)).concat(miss.slice(0,1)))];cartL.innerHTML='';let left=vs.length;const res=[];
+      vs.forEach((v,i)=>{const out=miss.includes(v),c=cartFig(cartL,{s:.55,sacks:1,handle:false,tag:F(v),lift:i%2?30:0});if(out){c.tagBox.setAttribute('fill','#ffd0c8');c.tagBox.setAttribute('stroke','#c9413a')}roads[0].place(c,v);roads[0].roll(c,v,end=>{res.push([v,end]);if(--left===0){
         const okA=Math.abs(a-lo)<1e-9,okB=Math.abs(b-(hi-q.snap))<1e-9;
         if(okA&&okB)win(q.target);else fail(!okA?(a<lo?`A cart at ${F(a)} rolls to ${F(roundTo(a,q.step))}: start the paint further along.`:`A cart at ${F(a-q.snap)} rolls to ${F(q.target)} too: paint further back.`):(b>=hi?`A cart at ${F(b)} ${Math.abs(b-hi)<1e-9?'balances on the peak and the wind blows it on':'rolls on'} to ${F(roundTo(b,q.step))}: stop the paint sooner.`:`A cart at ${F(b+q.snap)} rolls to ${F(q.target)} too: paint further.`))}})})}}
   function win(end){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);const q=S.q;
@@ -8631,7 +8658,7 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
     const q0=R[S.r],q=S.q=Object.assign({},q0,q0.vars?pick(q0.vars):{}),prev=S.v;
     Object.assign(S,{busy:false,won:false,at:null,picks:{},sel:new Set(),carts:[],wh:null,pa:null});S.v=q.vs?pick(q.vs.filter(v=>v!==prev).length?q.vs.filter(v=>v!==prev):q.vs):0;
     if(!again)st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);
-    if(q.kind==='triple'){const V=S.v;[[10,240],[100,368],[1000,496]].forEach(([s,base],i)=>{const lo=Math.floor(V/s)*s-2*s;const r=RD({lo,hi:lo+5*s,step:s,base,x0:150,x1:560,amp:28,sz:13});
+    if(q.kind==='triple'){const V=S.v;[[10,240],[100,368],[1000,496]].forEach(([s,base],i)=>{const lo=Math.floor(V/s)*s-2*s;const r=RD({lo,hi:lo+5*s,step:s,base,x0:150,x1:560,amp:28,sz:13,sock:false});
         el('text',{x:18,y:base-56,'font-size':14,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},roadL).textContent=`hills of ${fmtR(s)}`;
         const c=cartFig(cartL,{s:.6,sacks:1,tag:F(V),handle:false});r.place(c,V);S.carts.push(c)});
       [0,1,2].forEach(i=>tappable(i));decGo(ui,548,148,'Let them go',check,'Go');say(`One cart, three roads. On each road, tap the milestone the ${F(V)} cart will roll to.`);return}

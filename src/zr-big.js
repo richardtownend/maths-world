@@ -20,7 +20,7 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
   function tappable(ri,label=v=>`Milestone ${F(v)}${roads.length>1?` (${['top','middle','bottom'][ri]} road)`:''}`){const r=roads[ri];r.stones.forEach(({v,m})=>{el('rect',{x:-24,y:-50,width:48,height:80,fill:'transparent'},m.g);
     const tap=()=>{if(S.busy||S.won)return;if(S.q.kind==='place'&&S.at==null){say(`First drag the cart to ${F(S.v)} on the road.`);return}S.picks[ri]=v;SFX.tick(Math.round(v/r.step)%8);flag(ri,v)};
     interact(m.g,{label:label(v),tap});const lo=el('rect',{x:r.xOf(v)-24,y:r.yOf(v)+2,width:48,height:42,fill:'transparent'},hitL);interact(lo,{label:label(v)+' label',tap})})}
-  const windAt=(r,v)=>()=>{gust(cartL,r.xOf(v),r.yOf(v)-40);say('Balanced right on the top… here comes the wind!')};
+  const windAt=(r,v)=>()=>{gust(cartL,r.xOf(v),r.yOf(v)-40);say('Exactly halfway, balanced on the top… and the wind always blows forwards!')};
   function fail(msg){SFX.wrong();shake(2);say(msg);later(3800,()=>{S.busy=false;load(true)})}
   function why(v,step,got){const e=roundTo(v,step),half=Math.abs(((v/step)%1+1)%1-.5)<1e-6;
     return half?`${F(v)} is exactly halfway, so the wind blows it on to ${F(e)}. Halfway rounds up.`:`${F(v)} is nearer ${F(e)} than ${F(got)}: it rolls down to ${F(e)}.`}
@@ -39,8 +39,9 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
       roads[0].roll(cart,S.v,end=>{if(Math.abs(g-end)<1e-9)win(end);else{S.wh.lock(false);fail(`It rolled to ${F(end)}. ${Math.abs(g-roundTo(g,q.step))>1e-9?`${F(g)} isn’t a milestone: they’re every ${F(q.step)}.`:why(S.v,q.step,g)}`)}},{wind:windAt(roads[0],S.v)});return}
     if(q.kind==='paint'){const [a,b]=S.pa.get(),lo=q.target-q.step/2,hi=q.target+q.step/2;S.busy=true;
       /* send carts down the painted stretch and just either side of it */
-      const vs=[...new Set([a-q.snap,a,(a+b)/2,b-q.snap,b].map(v=>roundTo(clamp(v,q.lo,q.hi),q.snap)))];cartL.innerHTML='';let left=vs.length;const res=[];
-      vs.forEach(v=>{const c=cartFig(cartL,{s:.55,sacks:1,handle:false});roads[0].place(c,v);roads[0].roll(c,v,end=>{res.push([v,end]);if(--left===0){
+      const okA0=Math.abs(a-lo)<1e-9,okB0=Math.abs(b-(hi-q.snap))<1e-9,miss=[];if(a>lo+1e-9)miss.push(a-q.snap);if(b<hi-q.snap-1e-9)miss.push(b+q.snap);
+      const vs=[...new Set([a,a+(b-a)/4,(a+b)/2,a+3*(b-a)/4,b].map(v=>roundTo(v,q.snap)).concat(miss.slice(0,1)))];cartL.innerHTML='';let left=vs.length;const res=[];
+      vs.forEach((v,i)=>{const out=miss.includes(v),c=cartFig(cartL,{s:.55,sacks:1,handle:false,tag:F(v),lift:i%2?30:0});if(out){c.tagBox.setAttribute('fill','#ffd0c8');c.tagBox.setAttribute('stroke','#c9413a')}roads[0].place(c,v);roads[0].roll(c,v,end=>{res.push([v,end]);if(--left===0){
         const okA=Math.abs(a-lo)<1e-9,okB=Math.abs(b-(hi-q.snap))<1e-9;
         if(okA&&okB)win(q.target);else fail(!okA?(a<lo?`A cart at ${F(a)} rolls to ${F(roundTo(a,q.step))}: start the paint further along.`:`A cart at ${F(a-q.snap)} rolls to ${F(q.target)} too: paint further back.`):(b>=hi?`A cart at ${F(b)} ${Math.abs(b-hi)<1e-9?'balances on the peak and the wind blows it on':'rolls on'} to ${F(roundTo(b,q.step))}: stop the paint sooner.`:`A cart at ${F(b+q.snap)} rolls to ${F(q.target)} too: paint further.`))}})})}}
   function win(end){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);const q=S.q;
@@ -59,7 +60,7 @@ function roadRounds(id,root,R,{unlockK,nearestWord=s=>`nearest ${fmtR(s)}`}){
     const q0=R[S.r],q=S.q=Object.assign({},q0,q0.vars?pick(q0.vars):{}),prev=S.v;
     Object.assign(S,{busy:false,won:false,at:null,picks:{},sel:new Set(),carts:[],wh:null,pa:null});S.v=q.vs?pick(q.vs.filter(v=>v!==prev).length?q.vs.filter(v=>v!==prev):q.vs):0;
     if(!again)st.ready(false);navDots(R.length,S.r);decQ(qL,parts(false),false,guide);
-    if(q.kind==='triple'){const V=S.v;[[10,240],[100,368],[1000,496]].forEach(([s,base],i)=>{const lo=Math.floor(V/s)*s-2*s;const r=RD({lo,hi:lo+5*s,step:s,base,x0:150,x1:560,amp:28,sz:13});
+    if(q.kind==='triple'){const V=S.v;[[10,240],[100,368],[1000,496]].forEach(([s,base],i)=>{const lo=Math.floor(V/s)*s-2*s;const r=RD({lo,hi:lo+5*s,step:s,base,x0:150,x1:560,amp:28,sz:13,sock:false});
         el('text',{x:18,y:base-56,'font-size':14,'font-weight':800,fill:'#fff4e6',stroke:'#3a2a1a','stroke-width':3,'paint-order':'stroke'},roadL).textContent=`hills of ${fmtR(s)}`;
         const c=cartFig(cartL,{s:.6,sacks:1,tag:F(V),handle:false});r.place(c,V);S.carts.push(c)});
       [0,1,2].forEach(i=>tappable(i));decGo(ui,548,148,'Let them go',check,'Go');say(`One cart, three roads. On each road, tap the milestone the ${F(V)} cart will roll to.`);return}

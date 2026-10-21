@@ -58,7 +58,7 @@ const IDEAS=[
   {k:'rsticks',w:'sticks',t:'Roman numerals began as tally sticks: I is one. Five sticks are tied into a hand, V, and two hands make an X, ten. Biggest first: XVII is 10 + 5 + 1 + 1 = 17.'},
   {k:'rmason',w:'mason',t:'Never four the same in a row. A small letter in front of a bigger one takes itself away: IV is 5 − 1 = 4, IX is 9, XL is 40, XC is 90. L is 50 and C is 100.'},
   {k:'ryear',w:'year',t:'To read a long Roman number, split it into thousands, hundreds, tens and ones: MCMXC is M | CM | XC = 1000 + 900 + 90 = 1990. D is 500 and M is 1000.'},
-  {k:'rhills',w:'hills',t:'Rounding to the nearest 10: which milestone is nearer? 37 is 3 from 40 and 7 from 30, so it rounds to 40. Exactly halfway, like 35, always rounds up.'},
+  {k:'rhills',w:'hills',t:'Rounding to the nearest 10: which milestone is nearer? 37 is 3 from 40 and 7 from 30, so it rounds to 40. Exactly halfway, like 35, always rounds up: on the Old Road the wind always blows forwards.'},
   {k:'rbig',w:'bighills',t:'Rounding to 100 or 1,000 is the same idea on bigger hills. Look at the next digit down: 3,720 to the nearest 1,000 looks at the 7 hundreds: 5 or more goes up, so 4,000.'},
   {k:'rgreat',w:'greatroad',t:'Every number from 245,000 up to 254,999 rounds to 250,000 (to the nearest 10,000). Rounding is a stretch of road, not a single spot.'},
   {k:'rinn',w:'inn',t:'Decimals round the same way: 2.37 to the nearest whole is 2, to one decimal place it is 2.4. Look at the digit just after the one you are keeping.'},

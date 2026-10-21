@@ -22,14 +22,14 @@ mount(root){
     S.busy=true;say('Dex lets go…');
     road.roll(cart,S.v,end=>{if(end===S.pick){win(end);return}SFX.wrong();shake(2);
       const mid=Math.abs(S.v-roundTo(S.v,10))===5||(S.v%10===5);
-      say(mid?`Exactly halfway, so it balanced on the top until the wind blew it on to ${end}. Halfway always rounds up.`:q.blank?'It rolled down to the nearer milestone. Look which side of the hilltop it’s on.':`${S.v} is ${Math.abs(end-S.v)} from ${end} but ${Math.abs(S.pick-S.v)} from ${S.pick}: it rolls to the nearer one.`);
-      later(3400,()=>{S.busy=false;load(true)})},{wind:()=>{gust(cartL,road.xOf(S.v),road.yOf(S.v)-40);say('It’s balanced right on the top… here comes the wind!')}})}
+      say(mid?`Exactly halfway, so it balanced on the top until the wind blew it on to ${end}. On the Old Road the wind always blows forwards: halfway always rounds up.`:q.blank?'It rolled down to the nearer milestone. Look which side of the hilltop it’s on.':`${S.v} is ${Math.abs(end-S.v)} from ${end} but ${Math.abs(S.pick-S.v)} from ${S.pick}: it rolls to the nearer one.`);
+      later(3400,()=>{S.busy=false;load(true)})},{wind:()=>{gust(cartL,road.xOf(S.v),road.yOf(S.v)-40);say('Exactly halfway: balanced on the top… and the wind always blows forwards!')}})}
   function judgeMany(){const want=new Set(S.carts.filter(c=>c.end===40).map(c=>c.v)),got=S.sel;
     if(want.size===got.size&&[...want].every(v=>got.has(v))){win(40);return}SFX.wrong();shake(2);
     const missed=[...want].filter(v=>!got.has(v)),wrong=[...got].filter(v=>!want.has(v));
     say(wrong.length?`${wrong[0]} rolled to ${roundTo(wrong[0],10)}, not 40.${wrong[0]%10===5?' Exactly halfway, so the wind blew it on.':''}`:missed[0]%10===5?`${missed[0]} is exactly halfway, so the wind blew it on to 40.`:`${missed[0]} rolled to 40 too: it’s nearer 40 than ${missed[0]<40?30:50}.`);later(3600,()=>{S.busy=false;load(true)})}
   function win(end){S.won=true;roundWon(S.r);SFX.fanfare();heehaw();guide.cheer();decQ(qL,parts(true),true,guide);burst(road.xOf(end),road.yOf(end)-30,{n:16});const q=R[S.r];
-    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')} all end up at 40${S.sel.has(35)?' (35 is exactly halfway, so the wind blows it on)':''}.`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway: the wind blows it on. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
+    say(q.many?`${[...S.sel].sort((a,b)=>a-b).join(', ')} all end up at 40${S.sel.has(35)?' (35 is exactly halfway, so the wind blows it on)':''}.`:q.blank?'Right down into the valley: the nearer milestone.':S.v%10===5?`${S.v} is exactly halfway, so it balanced on the top. The wind always blows forwards, so it rolled on: halfway rounds up. ${S.v} rounds to ${end}.`:`${S.v} is only ${Math.abs(end-S.v)} from ${end}. ${S.v} rounds to ${end}.`);
     if(S.r>=2)unlock('rhills');later(1400,()=>st.ready(true))}
   function load(again){EPOCH++;FX.innerHTML='';cartL.innerHTML='';ui.innerHTML='';ui.appendChild(guide.g);flag=null;const q=R[S.r];
     const prev=S.v;Object.assign(S,{busy:false,won:false,at:null,pick:null,sel:new Set(),carts:[]});S.v=q.vs?pick(q.vs.filter(v=>v!==prev).length?q.vs.filter(v=>v!==prev):q.vs):0;
@@ -42,7 +42,7 @@ mount(root){
     if(q.place){cart.put(78,170,0);
       const shelf=el('g',{},cartL);el('text',{x:78,y:192,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#3a2418'},shelf).textContent='drag me';
       interact(cart.g,{label:`The ${S.v} cart: drag it onto the road`,down:()=>({}),move:p=>{if(S.busy||S.won)return;shelf.remove();const v=clamp(Math.round(road.vOf(p.x)),q.lo,q.hi);if(v!==S.at){S.at=v;road.place(cart,v);SFX.tick(v%8)}},tap:()=>{}});
-      say(S.r===2?`This cart is ${S.v}. Drag it to ${S.v} on the road, then tap the milestone it will roll to.`:`Drag the ${S.v} cart onto the road. Then where will it roll?`)}
+      say(S.r===2?`This cart is ${S.v}. Drag it to ${S.v} on the road, then tap the milestone it will roll to.`:`This cart is exactly halfway between two milestones. Drag it onto the road. Which way will it go? Look at the windsock.`)}
     else{road.place(cart,S.v);
       say(S.r===0?'Dex has stopped the cart on a hill. When he lets go, which milestone will it roll to? Tap it, then Go.':'Close to the top this time! Which milestone will it roll down to?')}}
   W.hills.dbgQ=()=>({r:S.r,v:S.v,at:S.at,pick:S.pick,busy:S.busy,won:S.won,carts:S.carts.map(c=>c.v),xs:road?[road.xOf(S.v),road.yOf(S.v)]:null,cx:cart?[cart.x,cart.y]:null});
