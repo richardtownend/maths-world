@@ -1,5 +1,5 @@
 /* Maths Worlds offline cache. VERSION changes with every update, so the tablet picks up new versions. */
-const VERSION='mw-0d1210ab84';
+const VERSION='mw-cec4395049';
 const FILES=["./", "index.html", "manifest.webmanifest", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "fonts/fraunces-latin-500-italic.woff2", "fonts/fraunces-latin-600-normal.woff2", "fonts/lexend-latin-400-normal.woff2", "fonts/lexend-latin-600-normal.woff2"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

@@ -7381,9 +7381,12 @@ mount(root){
     el('text',{y:-8,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#3a2418'},tag).textContent=`costs ${fmtP(q.p)}`;el('text',{y:18,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#3a2418'},tag).textContent=`you pay ${fmtP(q.g)}`;
     moneyPiece(scene,316,170,q.g,{s:1.4});
     const till=el('g',{},ui);el('rect',{x:30,y:384,width:450,height:80,rx:10,fill:'#6a4a3a',stroke:'#3a2418','stroke-width':3},till);el('text',{x:44,y:402,'font-size':12,'font-weight':800,fill:'#fff0a0'},till).textContent='the till';
-    [1,2,5,10,20,50,100,200,500].forEach((v,i)=>{const c=moneyPiece(till,62+i*48,436,v,{s:1.2});interact(c,{label:`Till: ${fmtP(v)}`,tap:()=>{if(S.busy||S.won)return;if(S.laid.length>=16)return;S.laid.push(v);SFX.clink&&SFX.clink();draw()}})});
+    /* each compartment holds a stack of coins: there are plenty of every kind */
+    [1,2,5,10,20,50,100,200,500].forEach((v,i)=>{const x=62+i*48;el('rect',{x:x-22,y:410,width:44,height:50,rx:6,fill:'#4a3228',stroke:'#2a1a12','stroke-width':1.5},till);
+      if(v<500)[6,3].forEach(dy=>moneyPiece(till,x,438+dy,v,{s:1.2}).setAttribute('opacity',.85));else[6,3].forEach(dy=>moneyPiece(till,x,438+dy,v,{s:.78}).setAttribute('opacity',.85));
+      const c=moneyPiece(till,x,v<500?436:436,v,{s:v<500?1.2:.78});interact(c,{label:`Till: ${fmtP(v)}`,tap:()=>{if(S.busy||S.won)return;if(S.laid.length>=16)return;S.laid.push(v);SFX.clink&&SFX.clink();draw()}})});
     draw();decGo(ui,540,500,'Check the change',check,'Check');
-    say(`The ${IT[1]} costs ${fmtP(q.p)}. You pay with ${fmtP(q.g)}. How much change do you get?${S.r===0?' Count up: lay coins from the till along the strip.':''}`)}
+    say(`The ${IT[1]} costs ${fmtP(q.p)}. You pay with ${fmtP(q.g)}. How much change do you get?${S.r===0?' Count up: lay coins from the till along the strip.':S.r===1?' The till has plenty of every coin: tap one as often as you need.':''}`)}
   W.change.dbgQ=()=>({...Q(),r:S.r});S.r=resumeAt(R.length);load();
 }};
 /* ---------- 4. Sharing the loot: what long division really does ---------- */
